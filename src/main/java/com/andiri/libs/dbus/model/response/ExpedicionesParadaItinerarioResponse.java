@@ -1,16 +1,25 @@
-package com.andiri.libs.dbus.model.response;
+package response;
 
-import com.andiri.libs.dbus.model.Avisos;
+import Avisos;
+import Itinerario; // Importa la clase Itinerario
+import java.util.List; // Importa la clase List
 
 public class ExpedicionesParadaItinerarioResponse {
     private String estado;
     private Avisos avisos;
-    // Define fields specific to expedicionesParadaItinerario response
-    // ...
+    private Itinerario itinerario; // Usa la clase Itinerario que definimos
+    private List<String> horas; // Lista de Strings para las horas
 
-    // Getters and Setters...
+    // Getters y Setters...
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
     public Avisos getAvisos() { return avisos; }
     public void setAvisos(Avisos avisos) { this.avisos = avisos; }
+
+    public Itinerario getItinerario() { return itinerario; }
+    public void setItinerario(Itinerario itinerario) { this.itinerario = itinerario; }
+
+    public List<String> getHoras() { return horas; }
+    public void setHoras(List<String> horas) { this.horas = horas; }
 }

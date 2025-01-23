@@ -1,6 +1,6 @@
-package com.andiri.libs.dbus.model.response;
+package response;
 
-import com.andiri.libs.dbus.model.Avisos;
+import Avisos;
 
 public class AvisosResponse {
     private String estado;
