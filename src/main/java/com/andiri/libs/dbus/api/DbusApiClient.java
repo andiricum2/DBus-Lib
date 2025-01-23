@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
  * <p>
  *  The {@code DbusApiClient} class provides a Java client to interact with the dBUS API.
  *  It handles communication, request building, response parsing, and error handling for all available API endpoints.
- *  The client is configured using a {@link Builder} for setting default language, connection and read timeouts.
+ *  The client is configured using a {@link DbusApiClientBuilder} for setting default language, connection and read timeouts.
  * </p>
  * <p>
  *  It supports both synchronous and asynchronous API calls, returning JSON responses as pretty-printed strings.
@@ -35,66 +35,6 @@ public class DbusApiClient {
 
     private static final Set<String> VALID_LANGUAGES = Set.of("es", "eu", "en", "fr");
 
-    /**
-     * <p>
-     *  {@code Builder} class to construct a {@code DbusApiClient} instance.
-     *  It allows configuring optional parameters such as default language, connect timeout, and read timeout.
-     *  The base URL is fixed and cannot be changed through the builder.
-     * </p>
-     */
-    public static class Builder {
-        private String defaultLanguage = "es";
-        private int connectTimeoutMillis = 5000;
-        private int readTimeoutMillis = 10000;
-
-        /**
-         *  Constructs a new {@code Builder} instance with default settings.
-         *  Base URL is predefined and cannot be set via builder.
-         */
-        public Builder() { // Base URL is fixed, no need to pass in constructor
-        }
-
-        /**
-         * Sets the default language for API requests.
-         * If not set, defaults to "es" (Spanish).
-         * @param defaultLanguage the default language code (es, eu, en, fr).
-         * @return This {@code Builder} instance for method chaining.
-         */
-        public Builder defaultLanguage(String defaultLanguage) {
-            this.defaultLanguage = defaultLanguage;
-            return this;
-        }
-
-        /**
-         * Sets the connection timeout for HTTP requests.
-         * Defaults to 5000 milliseconds.
-         * @param connectTimeoutMillis Timeout in milliseconds for establishing a connection.
-         * @return This {@code Builder} instance for method chaining.
-         */
-        public Builder connectTimeoutMillis(int connectTimeoutMillis) {
-            this.connectTimeoutMillis = connectTimeoutMillis;
-            return this;
-        }
-
-        /**
-         * Sets the read timeout for HTTP requests.
-         * Defaults to 10000 milliseconds.
-         * @param readTimeoutMillis Timeout in milliseconds for reading data from the connection.
-         * @return This {@code Builder} instance for method chaining.
-         */
-        public Builder readTimeoutMillis(int readTimeoutMillis) {
-            this.readTimeoutMillis = readTimeoutMillis;
-            return this;
-        }
-
-        /**
-         * Builds and returns a new {@code DbusApiClient} instance with the configured parameters.
-         * @return A new {@code DbusApiClient} instance.
-         */
-        public DbusApiClient build() {
-            return new DbusApiClient(this);
-        }
-    }
 
     /**
      * Private constructor to create a {@code DbusApiClient} using a {@code Builder}.
@@ -102,10 +42,10 @@ public class DbusApiClient {
      * @param builder The {@code Builder} instance containing configuration parameters.
      * @throws IllegalArgumentException if the default language is invalid.
      */
-    private DbusApiClient(Builder builder) {
-        this.defaultLanguage = builder.defaultLanguage;
-        this.connectTimeoutMillis = builder.connectTimeoutMillis;
-        this.readTimeoutMillis = builder.readTimeoutMillis;
+    DbusApiClient(DbusApiClientBuilder builder) {
+        this.defaultLanguage = builder.defaultLanguage();
+        this.connectTimeoutMillis = builder.connectTimeoutMillis();
+        this.readTimeoutMillis = builder.readTimeoutMillis();
 
         if (!VALID_LANGUAGES.contains(this.defaultLanguage)) {
             throw new IllegalArgumentException("Invalid default language: " + this.defaultLanguage + ". Must be one of: " + VALID_LANGUAGES);
@@ -822,41 +762,5 @@ public class DbusApiClient {
     public CompletableFuture<String> listadoLineasAsync() { // New async method for listadoLineas
         String url = buildUrl("listadoLineas", null); // No params for this endpoint
         return getJsonResponseAsync(url);
-    }
-
-
-    public static void main(String[] args) {
-        DbusApiClient apiClient = new DbusApiClient.Builder() // Base URL is fixed, no need to set it
-                .defaultLanguage("es")
-                .connectTimeoutMillis(3000)
-                .readTimeoutMillis(7000)
-                .build();
-
-        try {
-            // Example usage for tiemposParada (synchronous)
-            String tiemposParadaResponse = apiClient.tiemposParada("1", null);
-            System.out.println("Tiempos Parada Response (Sync):\n" + tiemposParadaResponse);
-
-            // Example usage for recorridoLinea (synchronous)
-            String recorridoLineaResponse = apiClient.recorridoLinea("1");
-            System.out.println("\nRecorrido Linea Response (Sync):\n" + recorridoLineaResponse);
-
-            // Example usage for avisos (synchronous)
-            String avisosResponse = apiClient.avisos("es");
-            System.out.println("\nAvisos Response (Sync):\n" + avisosResponse);
-
-            // Example usage for tiemposParadaAsync (asynchronous)
-            apiClient.tiemposParadaAsync("1", "es").thenAccept(responseAsync -> {
-                System.out.println("\nTiempos Parada Response (Async):\n" + responseAsync);
-            }).join(); // .join() to wait for the async operation to complete in main thread for example purpose
-
-        } catch (ApiException e) {
-            System.err.println("\nAPI Error: " + e.getMessage());
-            System.err.println("Status Code: " + e.getStatusCode());
-            System.err.println("Response Body: " + e.getResponseBody());
-        } catch (Exception e) {
-            System.err.println("\nGeneral Error: " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 }
