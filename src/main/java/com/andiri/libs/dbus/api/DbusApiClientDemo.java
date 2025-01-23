@@ -2,7 +2,7 @@
 package com.andiri.libs.dbus.api;
 
 import com.andiri.libs.dbus.exceptions.ApiException;
-import TiemposParadaResponse;
+import com.andiri.libs.dbus.model.response.TiemposParadaResponse;
 
 public class DbusApiClientDemo {
 

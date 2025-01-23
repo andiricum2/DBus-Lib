@@ -1,6 +1,6 @@
-package response;
+package com.andiri.libs.dbus.model.response;
 
-import Avisos; // Asegúrate de que esta clase Avisos existe y representa un elemento de la lista de avisos
+import com.andiri.libs.dbus.model.Avisos;
 import java.util.List; // Importa la clase List
 
 public class DatosVehiculoResponse {

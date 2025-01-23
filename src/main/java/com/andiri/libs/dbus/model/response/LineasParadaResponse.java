@@ -1,7 +1,8 @@
-package response;
+package com.andiri.libs.dbus.model.response;
 
-import Avisos;
-import Linea; // Import the Linea model
+import com.andiri.libs.dbus.model.Avisos;
+import com.andiri.libs.dbus.model.Linea;
+
 import java.util.List; // Import List
 
 public class LineasParadaResponse {

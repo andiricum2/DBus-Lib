@@ -1,7 +1,8 @@
-package response;
+package com.andiri.libs.dbus.model.response;
 
-import Avisos;
-import Itinerario; // Importa la clase Itinerario
+import com.andiri.libs.dbus.model.Avisos;
+import com.andiri.libs.dbus.model.Itinerario;
+
 import java.util.List; // Importa la clase List
 
 public class ExpedicionesParadaItinerarioResponse {

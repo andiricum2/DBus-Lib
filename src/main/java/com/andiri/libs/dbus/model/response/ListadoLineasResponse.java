@@ -1,7 +1,7 @@
-package response;
+package com.andiri.libs.dbus.model.response;
 
-import Avisos;
-import Linea;
+import com.andiri.libs.dbus.model.Avisos;
+import com.andiri.libs.dbus.model.Linea;
 
 import java.util.List;
 
