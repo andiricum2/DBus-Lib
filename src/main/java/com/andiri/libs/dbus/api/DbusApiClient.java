@@ -512,10 +512,10 @@ public class DbusApiClient {
      * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public CompletableFuture<String> tiemposParadaAsync(String codParada, String idioma) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<String> tiemposParadaAsync(int codParada, String idioma) { // Return CompletableFuture<String> JSON
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
-        params.put("codParada", codParada);
+        params.put("codParada", String.valueOf(codParada));
         params.put("idioma", languageToUse);
         String url = buildUrl("tiemposParada", params);
         return getJsonResponseAsync(url);
@@ -532,11 +532,11 @@ public class DbusApiClient {
      * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public CompletableFuture<String> tiemposParadaBusAsync(String codParada, String codVehiculo, String idioma) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<String> tiemposParadaBusAsync(int codParada, int codVehiculo, String idioma) { // Return CompletableFuture<String> JSON
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
-        params.put("codParada", codParada);
-        params.put("codVehiculo", codVehiculo);
+        params.put("codParada", String.valueOf(codParada));
+        params.put("codVehiculo", String.valueOf(codVehiculo));
         params.put("idioma", languageToUse);
         String url = buildUrl("tiemposParadaBus", params);
         return getJsonResponseAsync(url);
@@ -551,9 +551,9 @@ public class DbusApiClient {
      * @param petItinerario Boolean value (true/false) as String to request itinerary information.
      * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
      */
-    public CompletableFuture<String> datosVehiculoAsync(String codVehiculo, boolean petItinerario) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<String> datosVehiculoAsync(int codVehiculo, boolean petItinerario) { // Return CompletableFuture<String> JSON
         Map<String, String> params = new HashMap<>();
-        params.put("codVehiculo", codVehiculo);
+        params.put("codVehiculo", String.valueOf(codVehiculo));
         params.put("codEmpresa", "1"); // Hardcoded as per documentation
         params.put("petItinerario", String.valueOf(petItinerario));
         String url = buildUrl("datosVehiculo", params);
@@ -584,19 +584,26 @@ public class DbusApiClient {
      * </p>
      * @param idItinerario The ID of the itinerary.
      * @param idParada The ID of the bus stop.
-     * @param fecha Date in YYYYMMDD format.
-     * @param hora Time in HHMM format.
+     * @param fecha Date in ddMMyy format.
+     * @param hora Time in HHmm format.
      * @param idioma The language for the response (es, eu, en, fr).
      * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public CompletableFuture<String> expedicionesParadaItinerarioAsync(String idItinerario, String idParada, String fecha, String hora, String idioma) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<String> expedicionesParadaItinerarioAsync(int idItinerario, int idParada, LocalDate fecha, LocalTime hora, String idioma) { // Return CompletableFuture<String> JSON
         String languageToUse = getLanguageOrDefault(idioma);
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMyy");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
+
+        String fechaStr = fecha.format(dateFormatter);
+        String horaStr = hora.format(timeFormatter);
+
         Map<String, String> params = new HashMap<>();
-        params.put("idItinerario", idItinerario);
-        params.put("idParada", idParada);
-        params.put("fecha", fecha);
-        params.put("hora", hora);
+        params.put("idItinerario", String.valueOf(idItinerario));
+        params.put("idParada", String.valueOf(idParada));
+        params.put("fecha", fechaStr);
+        params.put("hora", horaStr);
         params.put("idioma", languageToUse);
         String url = buildUrl("expedicionesParadaItinerario", params);
         return getJsonResponseAsync(url);
@@ -609,19 +616,26 @@ public class DbusApiClient {
      * </p>
      * @param idSentido The ID of the direction (sense).
      * @param idParada The ID of the bus stop.
-     * @param fecha Date in YYYYMMDD format.
-     * @param hora Time in HHMM format.
+     * @param fecha Date in ddMMyy format.
+     * @param hora Time in HHmm format.
      * @param idioma The language for the response (es, eu, en, fr).
      * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public CompletableFuture<String> expedicionesParadaSentidoAsync(String idSentido, String idParada, String fecha, String hora, String idioma) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<String> expedicionesParadaSentidoAsync(int idSentido, int idParada, LocalDate fecha, LocalTime hora, String idioma) { // Return CompletableFuture<String> JSON
         String languageToUse = getLanguageOrDefault(idioma);
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMyy");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
+
+        String fechaStr = fecha.format(dateFormatter);
+        String horaStr = hora.format(timeFormatter);
+
         Map<String, String> params = new HashMap<>();
-        params.put("idSentido", idSentido);
-        params.put("idParada", idParada);
-        params.put("fecha", fecha);
-        params.put("hora", hora);
+        params.put("idSentido", String.valueOf(idSentido));
+        params.put("idParada", String.valueOf(idParada));
+        params.put("fecha", fechaStr);
+        params.put("hora", horaStr);
         params.put("idioma", languageToUse);
         String url = buildUrl("expedicionesParadaSentido", params);
         return getJsonResponseAsync(url);
@@ -642,10 +656,10 @@ public class DbusApiClient {
      * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public CompletableFuture<String> itinerariosLineaAsync(String idLinea, String idioma, String... idParada) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<String> itinerariosLineaAsync(int idLinea, String idioma, String... idParada) { // Return CompletableFuture<String> JSON
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
-        params.put("idLinea", idLinea);
+        params.put("idLinea", String.valueOf(idLinea));
         params.put("idioma", languageToUse);
         String path = "itinerariosLinea";
         if (idParada.length > 0) {
@@ -670,10 +684,10 @@ public class DbusApiClient {
      * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public CompletableFuture<String> sentidosLineaAsync(String idLinea, String idioma, String... idParada) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<String> sentidosLineaAsync(int idLinea, String idioma, String... idParada) { // Return CompletableFuture<String> JSON
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
-        params.put("idLinea", idLinea);
+        params.put("idLinea", String.valueOf(idLinea));
         params.put("idioma", languageToUse);
         String path = "sentidosLinea";
         if (idParada.length > 0) {
@@ -695,13 +709,18 @@ public class DbusApiClient {
      * @param idItinerario The ID of the itinerary.
      * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
      */
-    public CompletableFuture<String> expedicionesItinerarioAsync(String idParada, String tipoDia, String hInicio, String hFin, String idItinerario) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<String> expedicionesItinerarioAsync(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin, int idItinerario) { // Return CompletableFuture<String> JSON
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
+
+        String hInicioStr = hInicio.format(timeFormatter);
+        String hFinStr = hFin.format(timeFormatter);
+
         Map<String, String> params = new HashMap<>();
-        params.put("idParada", idParada);
+        params.put("idParada", String.valueOf(idParada));
         params.put("tipoDia", tipoDia);
-        params.put("hInicio", hInicio);
-        params.put("hFin", hFin);
-        params.put("idItinerario", idItinerario);
+        params.put("hInicio", hInicioStr);
+        params.put("hFin", hFinStr);
+        params.put("idItinerario", String.valueOf(idItinerario));
         String url = buildUrl("expedicionesItinerario", params);
         return getJsonResponseAsync(url);
     }
@@ -717,12 +736,17 @@ public class DbusApiClient {
      * @param hFin End time in HHMM format.
      * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
      */
-    public CompletableFuture<String> lineasParadaAsync(String idParada, String tipoDia, String hInicio, String hFin) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<String> lineasParadaAsync(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin) { // Return CompletableFuture<String> JSON
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
+
+        String hInicioStr = hInicio.format(timeFormatter);
+        String hFinStr = hFin.format(timeFormatter);
+
         Map<String, String> params = new HashMap<>();
-        params.put("idParada", idParada);
+        params.put("idParada", String.valueOf(idParada));
         params.put("tipoDia", tipoDia);
-        params.put("hInicio", hInicio);
-        params.put("hFin", hFin);
+        params.put("hInicio", hInicioStr);
+        params.put("hFin", hFinStr);
         String url = buildUrl("lineasParada", params);
         return getJsonResponseAsync(url);
     }
@@ -735,9 +759,9 @@ public class DbusApiClient {
      * @param idItinerario The ID of the itinerary.
      * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
      */
-    public CompletableFuture<String> paradasItinerarioAsync(String idItinerario) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<String> paradasItinerarioAsync(int idItinerario) { // Return CompletableFuture<String> JSON
         Map<String, String> params = new HashMap<>();
-        params.put("idItinerario", idItinerario);
+        params.put("idItinerario", String.valueOf(idItinerario));
         String url = buildUrl("paradasItinerario", params);
         return getJsonResponseAsync(url);
     }
@@ -750,9 +774,9 @@ public class DbusApiClient {
      * @param idSentido The ID of the direction (sense).
      * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
      */
-    public CompletableFuture<String> paradasSentidoAsync(String idSentido) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<String> paradasSentidoAsync(int idSentido) { // Return CompletableFuture<String> JSON
         Map<String, String> params = new HashMap<>();
-        params.put("idSentido", idSentido);
+        params.put("idSentido", String.valueOf(idSentido));
         String url = buildUrl("paradasSentido", params);
         return getJsonResponseAsync(url);
     }
@@ -765,9 +789,9 @@ public class DbusApiClient {
      * @param idLinea The ID of the bus line.
      * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
      */
-    public CompletableFuture<String> recorridoLineaAsync(String idLinea) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<String> recorridoLineaAsync(int idLinea) { // Return CompletableFuture<String> JSON
         Map<String, String> params = new HashMap<>();
-        params.put("idLinea", idLinea);
+        params.put("idLinea", String.valueOf(idLinea));
         String url = buildUrl("recorridoLinea", params);
         return getJsonResponseAsync(url);
     }
