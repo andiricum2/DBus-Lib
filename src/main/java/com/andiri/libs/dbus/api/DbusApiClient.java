@@ -8,6 +8,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -194,10 +197,10 @@ public class DbusApiClient {
      * @throws ApiException If the API request fails.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public String tiemposParada(String codParada, String idioma) throws ApiException { // Return String JSON
+    public String tiemposParada(int codParada, String idioma) throws ApiException { // idioma ya no es String? sino String
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
-        params.put("codParada", codParada);
+        params.put("codParada", String.valueOf(codParada)); // Convertir int a String para el HashMap
         params.put("idioma", languageToUse);
         String url = buildUrl("tiemposParada", params);
         return getJsonResponse(url);
@@ -215,11 +218,11 @@ public class DbusApiClient {
      * @throws ApiException If the API request fails.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public String tiemposParadaBus(String codParada, String codVehiculo, String idioma) throws ApiException { // Return String JSON
+    public String tiemposParadaBus(int codParada, int codVehiculo, String idioma) throws ApiException { // Return String JSON
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
-        params.put("codParada", codParada);
-        params.put("codVehiculo", codVehiculo);
+        params.put("codParada", String.valueOf(codParada)); // Convertir int a String para el HashMap
+        params.put("codVehiculo", String.valueOf(codVehiculo));
         params.put("idioma", languageToUse);
         String url = buildUrl("tiemposParadaBus", params);
         return getJsonResponse(url);
@@ -235,9 +238,9 @@ public class DbusApiClient {
      * @return A JSON string representing the API response, pretty-printed.
      * @throws ApiException If the API request fails.
      */
-    public String datosVehiculo(String codVehiculo, boolean petItinerario) throws ApiException { // Return String JSON
+    public String datosVehiculo(int codVehiculo, boolean petItinerario) throws ApiException { // Return String JSON
         Map<String, String> params = new HashMap<>();
-        params.put("codVehiculo", codVehiculo);
+        params.put("codVehiculo", String.valueOf(codVehiculo));
         params.put("codEmpresa", "1"); // Hardcoded as per documentation
         params.put("petItinerario", String.valueOf(petItinerario));
         String url = buildUrl("datosVehiculo", params);
@@ -269,20 +272,27 @@ public class DbusApiClient {
      * </p>
      * @param idItinerario The ID of the itinerary.
      * @param idParada The ID of the bus stop.
-     * @param fecha Date in YYYYMMDD format.
-     * @param hora Time in HHMM format.
+     * @param fecha Date in ddMMyy format.
+     * @param hora Time in HHmm format.
      * @param idioma The language for the response (es, eu, en, fr).
      * @return A JSON string representing the API response, pretty-printed.
      * @throws ApiException If the API request fails.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public String expedicionesParadaItinerario(String idItinerario, String idParada, String fecha, String hora, String idioma) throws ApiException { // Return String JSON
+    public String expedicionesParadaItinerario(int idItinerario, int idParada, LocalDate fecha, LocalTime hora, String idioma) throws ApiException { // Return String JSON
         String languageToUse = getLanguageOrDefault(idioma);
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMyy");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
+
+        String fechaStr = fecha.format(dateFormatter);
+        String horaStr = hora.format(timeFormatter);
+
         Map<String, String> params = new HashMap<>();
-        params.put("idItinerario", idItinerario);
-        params.put("idParada", idParada);
-        params.put("fecha", fecha);
-        params.put("hora", hora);
+        params.put("idItinerario", String.valueOf(idItinerario));
+        params.put("idParada", String.valueOf(idParada));
+        params.put("fecha", fechaStr);
+        params.put("hora", horaStr);
         params.put("idioma", languageToUse);
         String url = buildUrl("expedicionesParadaItinerario", params);
         return getJsonResponse(url);
@@ -295,20 +305,27 @@ public class DbusApiClient {
      * </p>
      * @param idSentido The ID of the direction (sense).
      * @param idParada The ID of the bus stop.
-     * @param fecha Date in YYYYMMDD format.
-     * @param hora Time in HHMM format.
+     * @param fecha Date in ddMMyy format.
+     * @param hora Time in HHmm format.
      * @param idioma The language for the response (es, eu, en, fr).
      * @return A JSON string representing the API response, pretty-printed.
      * @throws ApiException If the API request fails.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public String expedicionesParadaSentido(String idSentido, String idParada, String fecha, String hora, String idioma) throws ApiException { // Return String JSON
+    public String expedicionesParadaSentido(int idSentido, int idParada, LocalDate fecha, LocalTime hora, String idioma) throws ApiException { // Return String JSON
         String languageToUse = getLanguageOrDefault(idioma);
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMyy");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
+
+        String fechaStr = fecha.format(dateFormatter);
+        String horaStr = hora.format(timeFormatter);
+
         Map<String, String> params = new HashMap<>();
-        params.put("idSentido", idSentido);
-        params.put("idParada", idParada);
-        params.put("fecha", fecha);
-        params.put("hora", hora);
+        params.put("idSentido", String.valueOf(idSentido));
+        params.put("idParada", String.valueOf(idParada));
+        params.put("fecha", fechaStr);
+        params.put("hora", horaStr);
         params.put("idioma", languageToUse);
         String url = buildUrl("expedicionesParadaSentido", params);
         return getJsonResponse(url);
@@ -325,21 +342,16 @@ public class DbusApiClient {
      * </p>
      * @param idLinea The ID of the bus line.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @param idParada (Optional) The ID of the bus stop to filter itineraries.
      * @return A JSON string representing the API response, pretty-printed.
      * @throws ApiException If the API request fails.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public String itinerariosLinea(String idLinea, String idioma, String... idParada) throws ApiException { // Return String JSON
+    public String itinerariosLinea(int idLinea, String idioma) throws ApiException { // Return String JSON
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
-        params.put("idLinea", idLinea);
+        params.put("idLinea", String.valueOf(idLinea));
         params.put("idioma", languageToUse);
-        String path = "itinerariosLinea";
-        if (idParada.length > 0) {
-            params.put("idParada", idParada[0]);
-        }
-        String url = buildUrl(path, params);
+        String url = buildUrl("itinerariosLinea", params);
         return getJsonResponse(url);
     }
 
@@ -354,23 +366,20 @@ public class DbusApiClient {
      * </p>
      * @param idLinea The ID of the bus line.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @param idParada (Optional) The ID of the bus stop to filter directions.
      * @return A JSON string representing the API response, pretty-printed.
      * @throws ApiException If the API request fails.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public String sentidosLinea(String idLinea, String idioma, String... idParada) throws ApiException { // Return String JSON
+    public String sentidosLinea(int idLinea, String idioma) throws ApiException { // Return String JSON
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
-        params.put("idLinea", idLinea);
+        params.put("idLinea", String.valueOf(idLinea));
         params.put("idioma", languageToUse);
-        String path = "sentidosLinea";
-        if (idParada.length > 0) {
-            params.put("idParada", idParada[0]);
-        }
-        String url = buildUrl(path, params);
+        String url = buildUrl("sentidosLinea", params);
         return getJsonResponse(url);
     }
+
+    // TODO
 
     /**
      * <p>
@@ -385,9 +394,9 @@ public class DbusApiClient {
      * @return A JSON string representing the API response, pretty-printed.
      * @throws ApiException If the API request fails.
      */
-    public String expedicionesItinerario(String idParada, String tipoDia, String hInicio, String hFin, String idItinerario) throws ApiException { // Return String JSON
+    public String expedicionesItinerario(int idParada, String tipoDia, String hInicio, String hFin, String idItinerario) throws ApiException { // Return String JSON
         Map<String, String> params = new HashMap<>();
-        params.put("idParada", idParada);
+        params.put("idParada", String.valueOf(idParada));
         params.put("tipoDia", tipoDia);
         params.put("hInicio", hInicio);
         params.put("hFin", hFin);
