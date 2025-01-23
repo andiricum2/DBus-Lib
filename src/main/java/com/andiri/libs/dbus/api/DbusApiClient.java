@@ -387,20 +387,26 @@ public class DbusApiClient {
      *  Endpoint: {@code expedicionesItinerario?idParada=%s&tipoDia=%s&hInicio=%s&hFin=%s&idItinerario=%s}
      * </p>
      * @param idParada The ID of the bus stop.
-     * @param tipoDia Day type (LAB, SAB, DOM).
+     * @param tipoDia Day type // NO HAY INFORMACION PERO SE USA "H" SI NO SE METE NINGUN VALOR.
      * @param hInicio Start time in HHMM format.
      * @param hFin End time in HHMM format.
      * @param idItinerario The ID of the itinerary.
      * @return A JSON string representing the API response, pretty-printed.
      * @throws ApiException If the API request fails.
      */
-    public String expedicionesItinerario(int idParada, String tipoDia, String hInicio, String hFin, String idItinerario) throws ApiException { // Return String JSON
+    public String expedicionesItinerario(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin, int idItinerario) throws ApiException { // Return String JSON
+
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
+
+        String hInicioStr = hInicio.format(timeFormatter);
+        String hFinStr = hFin.format(timeFormatter);
+
         Map<String, String> params = new HashMap<>();
         params.put("idParada", String.valueOf(idParada));
         params.put("tipoDia", tipoDia);
-        params.put("hInicio", hInicio);
-        params.put("hFin", hFin);
-        params.put("idItinerario", idItinerario);
+        params.put("hInicio", hInicioStr);
+        params.put("hFin", hFinStr);
+        params.put("idItinerario", String.valueOf(idItinerario));
         String url = buildUrl("expedicionesItinerario", params);
         return getJsonResponse(url);
     }
@@ -417,12 +423,17 @@ public class DbusApiClient {
      * @return A JSON string representing the API response, pretty-printed.
      * @throws ApiException If the API request fails.
      */
-    public String lineasParada(String idParada, String tipoDia, String hInicio, String hFin) throws ApiException { // Return String JSON
+    public String lineasParada(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin) throws ApiException { // Return String JSON
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
+
+        String hInicioStr = hInicio.format(timeFormatter);
+        String hFinStr = hFin.format(timeFormatter);
+
         Map<String, String> params = new HashMap<>();
-        params.put("idParada", idParada);
+        params.put("idParada", String.valueOf(idParada));
         params.put("tipoDia", tipoDia);
-        params.put("hInicio", hInicio);
-        params.put("hFin", hFin);
+        params.put("hInicio", hInicioStr);
+        params.put("hFin", hFinStr);
         String url = buildUrl("lineasParada", params);
         return getJsonResponse(url);
     }
@@ -436,9 +447,9 @@ public class DbusApiClient {
      * @return A JSON string representing the API response, pretty-printed.
      * @throws ApiException If the API request fails.
      */
-    public String paradasItinerario(String idItinerario) throws ApiException { // Return String JSON
+    public String paradasItinerario(int idItinerario) throws ApiException { // Return String JSON
         Map<String, String> params = new HashMap<>();
-        params.put("idItinerario", idItinerario);
+        params.put("idItinerario", String.valueOf(idItinerario));
         String url = buildUrl("paradasItinerario", params);
         return getJsonResponse(url);
     }
@@ -452,9 +463,9 @@ public class DbusApiClient {
      * @return A JSON string representing the API response, pretty-printed.
      * @throws ApiException If the API request fails.
      */
-    public String paradasSentido(String idSentido) throws ApiException { // Return String JSON
+    public String paradasSentido(int idSentido) throws ApiException { // Return String JSON
         Map<String, String> params = new HashMap<>();
-        params.put("idSentido", idSentido);
+        params.put("idSentido", String.valueOf(idSentido));
         String url = buildUrl("paradasSentido", params);
         return getJsonResponse(url);
     }
@@ -468,9 +479,9 @@ public class DbusApiClient {
      * @return A JSON string representing the API response, pretty-printed.
      * @throws ApiException If the API request fails.
      */
-    public String recorridoLinea(String idLinea) throws ApiException { // Return String JSON
+    public String recorridoLinea(int idLinea) throws ApiException { // Return String JSON
         Map<String, String> params = new HashMap<>();
-        params.put("idLinea", idLinea);
+        params.put("idLinea", String.valueOf(idLinea));
         String url = buildUrl("recorridoLinea", params);
         return getJsonResponse(url);
     }
