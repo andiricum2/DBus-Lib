@@ -1,0 +1,20 @@
+package com.andiri.libs.dbus.model.response;
+
+import com.andiri.libs.dbus.model.Avisos;
+import com.andiri.libs.dbus.model.Itinerario;
+
+import java.util.List;
+
+public class ItinerariosLineaResponse {
+    private String estado;
+    private Avisos avisos;
+    private List<Itinerario> itinerarios;
+
+    // Getters and Setters...
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
+    public Avisos getAvisos() { return avisos; }
+    public void setAvisos(Avisos avisos) { this.avisos = avisos; }
+    public List<Itinerario> getItinerarios() { return itinerarios; }
+    public void setItinerarios(List<Itinerario> itinerarios) { this.itinerarios = itinerarios; }
+}
