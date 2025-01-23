@@ -23,7 +23,7 @@ import java.util.concurrent.CompletableFuture;
  *  The client is configured using a {@link DbusApiClientBuilder} for setting default language, connection and read timeouts.
  * </p>
  * <p>
- *  It supports both synchronous and asynchronous API calls, returning JSON responses as pretty-printed strings.
+ *  It supports both synchronous and asynchronous API calls, now returning Java models instead of JSON strings.
  *  Error handling is implemented through custom exceptions defined in the {@link com.andiri.libs.dbus.exceptions} package.
  * </p>
  */
@@ -79,13 +79,14 @@ public class DbusApiClient {
     }
 
     /**
-     * Private helper method to execute a synchronous HTTP GET request and parse the JSON response.
-     * Returns the JSON response as a pretty-printed String.
+     * Private helper method to execute a synchronous HTTP GET request and parse the JSON response to a specific model class.
      * @param url The full API URL to call.
-     * @return The JSON response as a pretty-printed String.
+     * @param responseClass The class of the model to which the JSON response should be deserialized.
+     * @param <T> The type of the response model.
+     * @return The deserialized response model.
      * @throws ApiException If the API request fails or the response cannot be parsed.
      */
-    private String getJsonResponse(String url) throws ApiException { // Return String JSON
+    private <T> T getJsonResponse(String url, Class<T> responseClass) throws ApiException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Accept", "application/json")
@@ -102,9 +103,8 @@ public class DbusApiClient {
 
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
             try {
-                // Return pretty printed JSON String
-                Object json = objectMapper.readValue(response.body(), Object.class); // Parse to generic object
-                return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json); // Convert back to pretty JSON String
+                // Deserialize JSON response to the specified model class
+                return objectMapper.readValue(response.body(), responseClass);
             } catch (Exception e) {
                 throw new ApiResponseParseException("Error parsing API response", response.body(), e);
             }
@@ -114,12 +114,13 @@ public class DbusApiClient {
     }
 
     /**
-     * Private helper method to execute an asynchronous HTTP GET request and parse the JSON response.
-     * Returns a CompletableFuture that resolves to the JSON response as a pretty-printed String.
+     * Private helper method to execute an asynchronous HTTP GET request and parse the JSON response to a specific model class.
      * @param url The full API URL to call.
-     * @return A CompletableFuture that resolves to the JSON response as a pretty-printed String.
+     * @param responseClass The class of the model to which the JSON response should be deserialized.
+     * @param <T> The type of the response model.
+     * @return A CompletableFuture that resolves to the deserialized response model.
      */
-    private CompletableFuture<String> getJsonResponseAsync(String url) { // Return CompletableFuture<String> JSON
+    private <T> CompletableFuture<T> getJsonResponseAsync(String url, Class<T> responseClass) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Accept", "application/json")
@@ -131,9 +132,8 @@ public class DbusApiClient {
                 .thenApply(response -> {
                     if (response.statusCode() >= 200 && response.statusCode() < 300) {
                         try {
-                            // Return pretty printed JSON String
-                            Object json = objectMapper.readValue(response.body(), Object.class); // Parse to generic object
-                            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json); // Convert back to pretty JSON String
+                            // Deserialize JSON response to the specified model class
+                            return objectMapper.readValue(response.body(), responseClass);
                         } catch (Exception e) {
                             throw new ApiResponseParseException("Error parsing API response", response.body(), e);
                         }
@@ -193,17 +193,17 @@ public class DbusApiClient {
      * </p>
      * @param codParada The code of the bus stop.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.TiemposParadaResponse} representing the API response.
      * @throws ApiException If the API request fails.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public String tiemposParada(int codParada, String idioma) throws ApiException { // idioma ya no es String? sino String
+    public com.andiri.libs.dbus.model.response.TiemposParadaResponse tiemposParada(int codParada, String idioma) throws ApiException {
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
-        params.put("codParada", String.valueOf(codParada)); // Convertir int a String para el HashMap
+        params.put("codParada", String.valueOf(codParada));
         params.put("idioma", languageToUse);
         String url = buildUrl("tiemposParada", params);
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.TiemposParadaResponse.class);
     }
 
     /**
@@ -214,18 +214,18 @@ public class DbusApiClient {
      * @param codParada The code of the bus stop.
      * @param codVehiculo The code of the bus vehicle.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.TiemposParadaResponse} representing the API response.
      * @throws ApiException If the API request fails.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public String tiemposParadaBus(int codParada, int codVehiculo, String idioma) throws ApiException { // Return String JSON
+    public com.andiri.libs.dbus.model.response.TiemposParadaResponse tiemposParadaBus(int codParada, int codVehiculo, String idioma) throws ApiException {
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
-        params.put("codParada", String.valueOf(codParada)); // Convertir int a String para el HashMap
+        params.put("codParada", String.valueOf(codParada));
         params.put("codVehiculo", String.valueOf(codVehiculo));
         params.put("idioma", languageToUse);
         String url = buildUrl("tiemposParadaBus", params);
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.TiemposParadaResponse.class);
     }
 
     /**
@@ -235,16 +235,16 @@ public class DbusApiClient {
      * </p>
      * @param codVehiculo The code of the bus vehicle.
      * @param petItinerario Boolean value (true/false) as String to request itinerary information.
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.DatosVehiculoResponse} representing the API response.
      * @throws ApiException If the API request fails.
      */
-    public String datosVehiculo(int codVehiculo, boolean petItinerario) throws ApiException { // Return String JSON
+    public com.andiri.libs.dbus.model.response.DatosVehiculoResponse datosVehiculo(int codVehiculo, boolean petItinerario) throws ApiException {
         Map<String, String> params = new HashMap<>();
         params.put("codVehiculo", String.valueOf(codVehiculo));
         params.put("codEmpresa", "1"); // Hardcoded as per documentation
         params.put("petItinerario", String.valueOf(petItinerario));
         String url = buildUrl("datosVehiculo", params);
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.DatosVehiculoResponse.class);
     }
 
     /**
@@ -253,16 +253,16 @@ public class DbusApiClient {
      *  Endpoint: {@code avisos?idioma=%s}
      * </p>
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.AvisosResponse} representing the API response.
      * @throws ApiException If the API request fails.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public String avisos(String idioma) throws ApiException { // Return String JSON
+    public com.andiri.libs.dbus.model.response.AvisosResponse avisos(String idioma) throws ApiException {
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
         params.put("idioma", languageToUse);
         String url = buildUrl("avisos", params);
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.AvisosResponse.class);
     }
 
     /**
@@ -275,11 +275,11 @@ public class DbusApiClient {
      * @param fecha Date in ddMMyy format.
      * @param hora Time in HHmm format.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.ExpedicionesParadaItinerarioResponse} representing the API response.
      * @throws ApiException If the API request fails.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public String expedicionesParadaItinerario(int idItinerario, int idParada, LocalDate fecha, LocalTime hora, String idioma) throws ApiException { // Return String JSON
+    public com.andiri.libs.dbus.model.response.ExpedicionesParadaItinerarioResponse expedicionesParadaItinerario(int idItinerario, int idParada, LocalDate fecha, LocalTime hora, String idioma) throws ApiException {
         String languageToUse = getLanguageOrDefault(idioma);
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMyy");
@@ -295,7 +295,7 @@ public class DbusApiClient {
         params.put("hora", horaStr);
         params.put("idioma", languageToUse);
         String url = buildUrl("expedicionesParadaItinerario", params);
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.ExpedicionesParadaItinerarioResponse.class);
     }
 
     /**
@@ -308,11 +308,11 @@ public class DbusApiClient {
      * @param fecha Date in ddMMyy format.
      * @param hora Time in HHmm format.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.ExpedicionesParadaSentidoResponse} representing the API response.
      * @throws ApiException If the API request fails.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public String expedicionesParadaSentido(int idSentido, int idParada, LocalDate fecha, LocalTime hora, String idioma) throws ApiException { // Return String JSON
+    public com.andiri.libs.dbus.model.response.ExpedicionesParadaSentidoResponse expedicionesParadaSentido(int idSentido, int idParada, LocalDate fecha, LocalTime hora, String idioma) throws ApiException {
         String languageToUse = getLanguageOrDefault(idioma);
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMyy");
@@ -328,7 +328,7 @@ public class DbusApiClient {
         params.put("hora", horaStr);
         params.put("idioma", languageToUse);
         String url = buildUrl("expedicionesParadaSentido", params);
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.ExpedicionesParadaSentidoResponse.class);
     }
 
     /**
@@ -342,17 +342,17 @@ public class DbusApiClient {
      * </p>
      * @param idLinea The ID of the bus line.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.ItinerariosLineaResponse} representing the API response.
      * @throws ApiException If the API request fails.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public String itinerariosLinea(int idLinea, String idioma) throws ApiException { // Return String JSON
+    public com.andiri.libs.dbus.model.response.ItinerariosLineaResponse itinerariosLinea(int idLinea, String idioma) throws ApiException {
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
         params.put("idLinea", String.valueOf(idLinea));
         params.put("idioma", languageToUse);
         String url = buildUrl("itinerariosLinea", params);
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.ItinerariosLineaResponse.class);
     }
 
     /**
@@ -366,20 +366,18 @@ public class DbusApiClient {
      * </p>
      * @param idLinea The ID of the bus line.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.SentidosLineaResponse} representing the API response.
      * @throws ApiException If the API request fails.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public String sentidosLinea(int idLinea, String idioma) throws ApiException { // Return String JSON
+    public com.andiri.libs.dbus.model.response.SentidosLineaResponse sentidosLinea(int idLinea, String idioma) throws ApiException {
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
         params.put("idLinea", String.valueOf(idLinea));
         params.put("idioma", languageToUse);
         String url = buildUrl("sentidosLinea", params);
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.SentidosLineaResponse.class);
     }
-
-    // TODO
 
     /**
      * <p>
@@ -391,11 +389,10 @@ public class DbusApiClient {
      * @param hInicio Start time in HHMM format.
      * @param hFin End time in HHMM format.
      * @param idItinerario The ID of the itinerary.
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.ExpedicionesItinerarioResponse} representing the API response.
      * @throws ApiException If the API request fails.
      */
-    public String expedicionesItinerario(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin, int idItinerario) throws ApiException { // Return String JSON
-
+    public com.andiri.libs.dbus.model.response.ExpedicionesItinerarioResponse expedicionesItinerario(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin, int idItinerario) throws ApiException {
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
 
         String hInicioStr = hInicio.format(timeFormatter);
@@ -408,7 +405,7 @@ public class DbusApiClient {
         params.put("hFin", hFinStr);
         params.put("idItinerario", String.valueOf(idItinerario));
         String url = buildUrl("expedicionesItinerario", params);
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.ExpedicionesItinerarioResponse.class);
     }
 
     /**
@@ -420,10 +417,10 @@ public class DbusApiClient {
      * @param tipoDia Day type (LAB, SAB, DOM).
      * @param hInicio Start time in HHMM format.
      * @param hFin End time in HHMM format.
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.LineasParadaResponse} representing the API response.
      * @throws ApiException If the API request fails.
      */
-    public String lineasParada(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin) throws ApiException { // Return String JSON
+    public com.andiri.libs.dbus.model.response.LineasParadaResponse lineasParada(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin) throws ApiException {
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
 
         String hInicioStr = hInicio.format(timeFormatter);
@@ -435,7 +432,7 @@ public class DbusApiClient {
         params.put("hInicio", hInicioStr);
         params.put("hFin", hFinStr);
         String url = buildUrl("lineasParada", params);
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.LineasParadaResponse.class);
     }
 
     /**
@@ -444,14 +441,14 @@ public class DbusApiClient {
      *  Endpoint: {@code paradasItinerario?idItinerario=%s}
      * </p>
      * @param idItinerario The ID of the itinerary.
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.ParadasItinerarioResponse} representing the API response.
      * @throws ApiException If the API request fails.
      */
-    public String paradasItinerario(int idItinerario) throws ApiException { // Return String JSON
+    public com.andiri.libs.dbus.model.response.ParadasItinerarioResponse paradasItinerario(int idItinerario) throws ApiException {
         Map<String, String> params = new HashMap<>();
         params.put("idItinerario", String.valueOf(idItinerario));
         String url = buildUrl("paradasItinerario", params);
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.ParadasItinerarioResponse.class);
     }
 
     /**
@@ -460,14 +457,14 @@ public class DbusApiClient {
      *  Endpoint: {@code paradasSentido?idSentido=%s}
      * </p>
      * @param idSentido The ID of the direction (sense).
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.ParadasSentidoResponse} representing the API response.
      * @throws ApiException If the API request fails.
      */
-    public String paradasSentido(int idSentido) throws ApiException { // Return String JSON
+    public com.andiri.libs.dbus.model.response.ParadasSentidoResponse paradasSentido(int idSentido) throws ApiException {
         Map<String, String> params = new HashMap<>();
         params.put("idSentido", String.valueOf(idSentido));
         String url = buildUrl("paradasSentido", params);
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.ParadasSentidoResponse.class);
     }
 
     /**
@@ -476,14 +473,14 @@ public class DbusApiClient {
      *  Endpoint: {@code recorridoLinea?idLinea=%s}
      * </p>
      * @param idLinea The ID of the bus line.
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.RecorridoLineaResponse} representing the API response.
      * @throws ApiException If the API request fails.
      */
-    public String recorridoLinea(int idLinea) throws ApiException { // Return String JSON
+    public com.andiri.libs.dbus.model.response.RecorridoLineaResponse recorridoLinea(int idLinea) throws ApiException {
         Map<String, String> params = new HashMap<>();
         params.put("idLinea", String.valueOf(idLinea));
         String url = buildUrl("recorridoLinea", params);
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.RecorridoLineaResponse.class);
     }
 
     /**
@@ -491,12 +488,12 @@ public class DbusApiClient {
      *  Synchronously retrieves a list of all bus lines.
      *  Endpoint: {@code listadoLineas}
      * </p>
-     * @return A JSON string representing the API response, pretty-printed.
+     * @return A {@link com.andiri.libs.dbus.model.response.ListadoLineasResponse} representing the API response.
      * @throws ApiException If the API request fails.
      */
-    public String listadoLineas() throws ApiException { // New method for listadoLineas
+    public com.andiri.libs.dbus.model.response.ListadoLineasResponse listadoLineas() throws ApiException {
         String url = buildUrl("listadoLineas", null); // No params for this endpoint
-        return getJsonResponse(url);
+        return getJsonResponse(url, com.andiri.libs.dbus.model.response.ListadoLineasResponse.class);
     }
 
 
@@ -509,16 +506,16 @@ public class DbusApiClient {
      * </p>
      * @param codParada The code of the bus stop.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.TiemposParadaResponse} representing the API response.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public CompletableFuture<String> tiemposParadaAsync(int codParada, String idioma) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<com.andiri.libs.dbus.model.response.TiemposParadaResponse> tiemposParadaAsync(int codParada, String idioma) {
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
         params.put("codParada", String.valueOf(codParada));
         params.put("idioma", languageToUse);
         String url = buildUrl("tiemposParada", params);
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.TiemposParadaResponse.class);
     }
 
     /**
@@ -529,17 +526,17 @@ public class DbusApiClient {
      * @param codParada The code of the bus stop.
      * @param codVehiculo The code of the bus vehicle.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.TiemposParadaResponse} representing the API response.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public CompletableFuture<String> tiemposParadaBusAsync(int codParada, int codVehiculo, String idioma) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<com.andiri.libs.dbus.model.response.TiemposParadaResponse> tiemposParadaBusAsync(int codParada, int codVehiculo, String idioma) {
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
         params.put("codParada", String.valueOf(codParada));
         params.put("codVehiculo", String.valueOf(codVehiculo));
         params.put("idioma", languageToUse);
         String url = buildUrl("tiemposParadaBus", params);
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.TiemposParadaResponse.class);
     }
 
     /**
@@ -549,15 +546,15 @@ public class DbusApiClient {
      * </p>
      * @param codVehiculo The code of the bus vehicle.
      * @param petItinerario Boolean value (true/false) as String to request itinerary information.
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.DatosVehiculoResponse} representing the API response.
      */
-    public CompletableFuture<String> datosVehiculoAsync(int codVehiculo, boolean petItinerario) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<com.andiri.libs.dbus.model.response.DatosVehiculoResponse> datosVehiculoAsync(int codVehiculo, boolean petItinerario) {
         Map<String, String> params = new HashMap<>();
         params.put("codVehiculo", String.valueOf(codVehiculo));
         params.put("codEmpresa", "1"); // Hardcoded as per documentation
         params.put("petItinerario", String.valueOf(petItinerario));
         String url = buildUrl("datosVehiculo", params);
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.DatosVehiculoResponse.class);
     }
 
     /**
@@ -566,15 +563,15 @@ public class DbusApiClient {
      *  Endpoint: {@code avisos?idioma=%s}
      * </p>
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.AvisosResponse} representing the API response.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public CompletableFuture<String> avisosAsync(String idioma) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<com.andiri.libs.dbus.model.response.AvisosResponse> avisosAsync(String idioma) {
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
         params.put("idioma", languageToUse);
         String url = buildUrl("avisos", params);
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.AvisosResponse.class);
     }
 
     /**
@@ -587,10 +584,10 @@ public class DbusApiClient {
      * @param fecha Date in ddMMyy format.
      * @param hora Time in HHmm format.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.ExpedicionesParadaItinerarioResponse} representing the API response.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public CompletableFuture<String> expedicionesParadaItinerarioAsync(int idItinerario, int idParada, LocalDate fecha, LocalTime hora, String idioma) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<com.andiri.libs.dbus.model.response.ExpedicionesParadaItinerarioResponse> expedicionesParadaItinerarioAsync(int idItinerario, int idParada, LocalDate fecha, LocalTime hora, String idioma) {
         String languageToUse = getLanguageOrDefault(idioma);
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMyy");
@@ -606,7 +603,7 @@ public class DbusApiClient {
         params.put("hora", horaStr);
         params.put("idioma", languageToUse);
         String url = buildUrl("expedicionesParadaItinerario", params);
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.ExpedicionesParadaItinerarioResponse.class);
     }
 
     /**
@@ -619,10 +616,10 @@ public class DbusApiClient {
      * @param fecha Date in ddMMyy format.
      * @param hora Time in HHmm format.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.ExpedicionesParadaSentidoResponse} representing the API response.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public CompletableFuture<String> expedicionesParadaSentidoAsync(int idSentido, int idParada, LocalDate fecha, LocalTime hora, String idioma) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<com.andiri.libs.dbus.model.response.ExpedicionesParadaSentidoResponse> expedicionesParadaSentidoAsync(int idSentido, int idParada, LocalDate fecha, LocalTime hora, String idioma) {
         String languageToUse = getLanguageOrDefault(idioma);
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMyy");
@@ -638,7 +635,7 @@ public class DbusApiClient {
         params.put("hora", horaStr);
         params.put("idioma", languageToUse);
         String url = buildUrl("expedicionesParadaSentido", params);
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.ExpedicionesParadaSentidoResponse.class);
     }
 
     /**
@@ -653,10 +650,10 @@ public class DbusApiClient {
      * @param idLinea The ID of the bus line.
      * @param idioma The language for the response (es, eu, en, fr).
      * @param idParada (Optional) The ID of the bus stop to filter itineraries.
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.ItinerariosLineaResponse} representing the API response.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public CompletableFuture<String> itinerariosLineaAsync(int idLinea, String idioma, String... idParada) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<com.andiri.libs.dbus.model.response.ItinerariosLineaResponse> itinerariosLineaAsync(int idLinea, String idioma, String... idParada) {
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
         params.put("idLinea", String.valueOf(idLinea));
@@ -666,7 +663,7 @@ public class DbusApiClient {
             params.put("idParada", idParada[0]);
         }
         String url = buildUrl(path, params);
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.ItinerariosLineaResponse.class);
     }
 
     /**
@@ -681,10 +678,10 @@ public class DbusApiClient {
      * @param idLinea The ID of the bus line.
      * @param idioma The language for the response (es, eu, en, fr).
      * @param idParada (Optional) The ID of the bus stop to filter directions.
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.SentidosLineaResponse} representing the API response.
      * @throws IllegalArgumentException if the language code is invalid.
      */
-    public CompletableFuture<String> sentidosLineaAsync(int idLinea, String idioma, String... idParada) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<com.andiri.libs.dbus.model.response.SentidosLineaResponse> sentidosLineaAsync(int idLinea, String idioma, String... idParada) {
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
         params.put("idLinea", String.valueOf(idLinea));
@@ -694,7 +691,7 @@ public class DbusApiClient {
             params.put("idParada", idParada[0]);
         }
         String url = buildUrl(path, params);
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.SentidosLineaResponse.class);
     }
 
     /**
@@ -707,9 +704,9 @@ public class DbusApiClient {
      * @param hInicio Start time in HHMM format.
      * @param hFin End time in HHMM format.
      * @param idItinerario The ID of the itinerary.
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.ExpedicionesItinerarioResponse} representing the API response.
      */
-    public CompletableFuture<String> expedicionesItinerarioAsync(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin, int idItinerario) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<com.andiri.libs.dbus.model.response.ExpedicionesItinerarioResponse> expedicionesItinerarioAsync(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin, int idItinerario) {
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
 
         String hInicioStr = hInicio.format(timeFormatter);
@@ -722,7 +719,7 @@ public class DbusApiClient {
         params.put("hFin", hFinStr);
         params.put("idItinerario", String.valueOf(idItinerario));
         String url = buildUrl("expedicionesItinerario", params);
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.ExpedicionesItinerarioResponse.class);
     }
 
     /**
@@ -734,9 +731,9 @@ public class DbusApiClient {
      * @param tipoDia Day type (LAB, SAB, DOM).
      * @param hInicio Start time in HHMM format.
      * @param hFin End time in HHMM format.
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.LineasParadaResponse} representing the API response.
      */
-    public CompletableFuture<String> lineasParadaAsync(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<com.andiri.libs.dbus.model.response.LineasParadaResponse> lineasParadaAsync(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin) {
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
 
         String hInicioStr = hInicio.format(timeFormatter);
@@ -748,7 +745,7 @@ public class DbusApiClient {
         params.put("hInicio", hInicioStr);
         params.put("hFin", hFinStr);
         String url = buildUrl("lineasParada", params);
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.LineasParadaResponse.class);
     }
 
     /**
@@ -757,13 +754,13 @@ public class DbusApiClient {
      *  Endpoint: {@code paradasItinerario?idItinerario=%s}
      * </p>
      * @param idItinerario The ID of the itinerary.
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.ParadasItinerarioResponse} representing the API response.
      */
-    public CompletableFuture<String> paradasItinerarioAsync(int idItinerario) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<com.andiri.libs.dbus.model.response.ParadasItinerarioResponse> paradasItinerarioAsync(int idItinerario) {
         Map<String, String> params = new HashMap<>();
         params.put("idItinerario", String.valueOf(idItinerario));
         String url = buildUrl("paradasItinerario", params);
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.ParadasItinerarioResponse.class);
     }
 
     /**
@@ -772,13 +769,13 @@ public class DbusApiClient {
      *  Endpoint: {@code paradasSentido?idSentido=%s}
      * </p>
      * @param idSentido The ID of the direction (sense).
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.ParadasSentidoResponse} representing the API response.
      */
-    public CompletableFuture<String> paradasSentidoAsync(int idSentido) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<com.andiri.libs.dbus.model.response.ParadasSentidoResponse> paradasSentidoAsync(int idSentido) {
         Map<String, String> params = new HashMap<>();
         params.put("idSentido", String.valueOf(idSentido));
         String url = buildUrl("paradasSentido", params);
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.ParadasSentidoResponse.class);
     }
 
     /**
@@ -787,13 +784,13 @@ public class DbusApiClient {
      *  Endpoint: {@code recorridoLinea?idLinea=%s}
      * </p>
      * @param idLinea The ID of the bus line.
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.RecorridoLineaResponse} representing the API response.
      */
-    public CompletableFuture<String> recorridoLineaAsync(int idLinea) { // Return CompletableFuture<String> JSON
+    public CompletableFuture<com.andiri.libs.dbus.model.response.RecorridoLineaResponse> recorridoLineaAsync(int idLinea) {
         Map<String, String> params = new HashMap<>();
         params.put("idLinea", String.valueOf(idLinea));
         String url = buildUrl("recorridoLinea", params);
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.RecorridoLineaResponse.class);
     }
 
     /**
@@ -801,10 +798,10 @@ public class DbusApiClient {
      *   Asynchronously retrieves a list of all bus lines.
      *   Endpoint: {@code listadoLineas}
      * </p>
-     * @return A CompletableFuture that resolves to a JSON string representing the API response, pretty-printed.
+     * @return A {@code CompletableFuture} that resolves to a {@link com.andiri.libs.dbus.model.response.ListadoLineasResponse} representing the API response.
      */
-    public CompletableFuture<String> listadoLineasAsync() { // New async method for listadoLineas
+    public CompletableFuture<com.andiri.libs.dbus.model.response.ListadoLineasResponse> listadoLineasAsync() {
         String url = buildUrl("listadoLineas", null); // No params for this endpoint
-        return getJsonResponseAsync(url);
+        return getJsonResponseAsync(url, com.andiri.libs.dbus.model.response.ListadoLineasResponse.class);
     }
 }

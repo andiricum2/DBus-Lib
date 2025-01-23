@@ -2,41 +2,35 @@
 package com.andiri.libs.dbus.api;
 
 import com.andiri.libs.dbus.exceptions.ApiException;
+import com.andiri.libs.dbus.model.response.TiemposParadaResponse;
 
 public class DbusApiClientDemo {
 
     public static void main(String[] args) {
-        DbusApiClient apiClient = new DbusApiClientBuilder() // Use DbusApiClientBuilder
+        DbusApiClient client = new DbusApiClientBuilder() // Use DbusApiClientBuilder
                 .defaultLanguage("es")
-                .connectTimeoutMillis(3000)
-                .readTimeoutMillis(7000)
+                .connectTimeoutMillis(5000)
+                .readTimeoutMillis(10000)
                 .build();
 
+
         try {
-            // Example usage for tiemposParada (synchronous)
-            String tiemposParadaResponse = apiClient.tiemposParada("1", null);
-            System.out.println("Tiempos Parada Response (Sync):\n" + tiemposParadaResponse);
-
-            // Example usage for recorridoLinea (synchronous)
-            String recorridoLineaResponse = apiClient.recorridoLinea("1");
-            System.out.println("\nRecorrido Linea Response (Sync):\n" + recorridoLineaResponse);
-
-            // Example usage for avisos (synchronous)
-            String avisosResponse = apiClient.avisos("es");
-            System.out.println("\nAvisos Response (Sync):\n" + avisosResponse);
-
-            // Example usage for tiemposParadaAsync (asynchronous)
-            apiClient.tiemposParadaAsync("1", "es").thenAccept(responseAsync -> {
-                System.out.println("\nTiempos Parada Response (Async):\n" + responseAsync);
-            }).join(); // .join() to wait for the async operation to complete in main thread for example purpose
+            TiemposParadaResponse tiemposParadaResponse = client.tiemposParada(200, "es");
+            if (tiemposParadaResponse != null && tiemposParadaResponse.getTiempos() != null) {
+                tiemposParadaResponse.getTiempos().forEach(tiempo -> {
+                    System.out.println("Hora: " + tiempo.getHora()); // Assuming 'Tiempo' model has getHora()
+                    System.out.println("Minutos: " + tiempo.getMinutos()); // Assuming 'Tiempo' model has getMinutos()
+                    // ... access other properties of 'Tiempo' model
+                });
+            } else {
+                System.out.println("No tiempos de parada disponibles o respuesta vacía.");
+            }
 
         } catch (ApiException e) {
-            System.err.println("\nAPI Error: " + e.getMessage());
-            System.err.println("Status Code: " + e.getStatusCode());
-            System.err.println("Response Body: " + e.getResponseBody());
-        } catch (Exception e) {
-            System.err.println("\nGeneral Error: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Error al obtener tiempos de parada: " + e.getMessage());
+            if (e.getResponseBody() != null) {
+                System.err.println("Response Body: " + e.getResponseBody());
+            }
         }
     }
 }
