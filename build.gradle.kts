@@ -1,5 +1,6 @@
 plugins {
     id("java-library")
+    id("maven-publish")
 }
 
 group = "com.andiri.libs.dbus"
@@ -7,6 +8,42 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            pom {
+                name.set("DBus Library")
+                description.set("A simple Java library for DBus integration.")
+                url.set("https://github.com/andiricum2/DBus-Lib")
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://opensource.org/licenses/MIT")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("andiri")
+                        name.set("Andoni Iriso")
+                        email.set("andiricum2@gmail.com")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:git://github.com/andiricum2/DBus-Lib.git")
+                    developerConnection.set("scm:git:ssh://github.com/andiricum2/DBus-Lib.git")
+                    url.set("https://github.com/andiricum2/DBus-Lib")
+                }
+            }
+        }
+    }
 }
 
 dependencies {
