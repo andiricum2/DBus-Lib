@@ -212,324 +212,6 @@ public class DbusApiClient {
     }
 
 
-    // --- API Endpoint Methods (Synchronous) ---
-
-    /**
-     * <p>
-     *  Synchronously retrieves estimated arrival times for buses at a specific stop.
-     *  Endpoint: {@code tiemposParada?codParada=%s&idioma=%s}
-     * </p>
-     * @param codParada The code of the bus stop.
-     * @param idioma The language for the response (es, eu, en, fr).
-     * @return A {@link TiemposParadaResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     * @throws IllegalArgumentException if the language code is invalid.
-     */
-    public TiemposParadaResponse tiemposParada(int codParada, String idioma) throws ApiException {
-        String languageToUse = getLanguageOrDefault(idioma);
-        Map<String, String> params = new HashMap<>();
-        params.put("codParada", String.valueOf(codParada));
-        params.put("idioma", languageToUse);
-        String url = buildUrl("tiemposParada", params);
-        return getJsonResponse(url, TiemposParadaResponse.class);
-    }
-
-    /**
-     * <p>
-     *  Synchronously retrieves estimated arrival times for a specific bus at a specific stop.
-     *  Endpoint: {@code tiemposParadaBus?codParada=%s&codVehiculo=%s&idioma=%s}
-     * </p>
-     * @param codParada The code of the bus stop.
-     * @param codVehiculo The code of the bus vehicle.
-     * @param idioma The language for the response (es, eu, en, fr).
-     * @return A {@link TiemposParadaResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     * @throws IllegalArgumentException if the language code is invalid.
-     */
-    public TiemposParadaResponse tiemposParadaBus(int codParada, int codVehiculo, String idioma) throws ApiException {
-        String languageToUse = getLanguageOrDefault(idioma);
-        Map<String, String> params = new HashMap<>();
-        params.put("codParada", String.valueOf(codParada));
-        params.put("codVehiculo", String.valueOf(codVehiculo));
-        params.put("idioma", languageToUse);
-        String url = buildUrl("tiemposParadaBus", params);
-        return getJsonResponse(url, TiemposParadaResponse.class);
-    }
-
-    /**
-     * <p>
-     *  Synchronously retrieves data for a specific bus vehicle.
-     *  Endpoint: {@code datosVehiculo?codVehiculo=%s&codEmpresa=1&petItinerario=%s}
-     * </p>
-     * @param codVehiculo The code of the bus vehicle.
-     * @param petItinerario Boolean value (true/false) as String to request itinerary information.
-     * @return A {@link DatosVehiculoResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     */
-    public DatosVehiculoResponse datosVehiculo(int codVehiculo, boolean petItinerario) throws ApiException {
-        Map<String, String> params = new HashMap<>();
-        params.put("codVehiculo", String.valueOf(codVehiculo));
-        params.put("codEmpresa", "1"); // Hardcoded as per documentation
-        params.put("petItinerario", String.valueOf(petItinerario));
-        String url = buildUrl("datosVehiculo", params);
-        return getJsonResponse(url, DatosVehiculoResponse.class);
-    }
-
-    /**
-     * <p>
-     *  Synchronously retrieves general alerts or notices from the dBUS service.
-     *  Endpoint: {@code avisos?idioma=%s}
-     * </p>
-     * @param idioma The language for the response (es, eu, en, fr).
-     * @return A {@link AvisosResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     * @throws IllegalArgumentException if the language code is invalid.
-     */
-    public AvisosResponse avisos(String idioma) throws ApiException {
-        String languageToUse = getLanguageOrDefault(idioma);
-        Map<String, String> params = new HashMap<>();
-        params.put("idioma", languageToUse);
-        String url = buildUrl("avisos", params);
-        return getJsonResponse(url, AvisosResponse.class);
-    }
-
-    /**
-     * <p>
-     *  Synchronously retrieves trip information for a specific stop and itinerary.
-     *  Endpoint: {@code expedicionesParadaItinerario?idItinerario=%s&idParada=%s&fecha=%s&hora=%s&idioma=%s}
-     * </p>
-     * @param idItinerario The ID of the itinerary.
-     * @param idParada The ID of the bus stop.
-     * @param fecha Date in ddMMyy format.
-     * @param hora Time in HHmm format.
-     * @param idioma The language for the response (es, eu, en, fr).
-     * @return A {@link ExpedicionesParadaItinerarioResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     * @throws IllegalArgumentException if the language code is invalid.
-     */
-    public ExpedicionesParadaItinerarioResponse expedicionesParadaItinerario(int idItinerario, int idParada, LocalDate fecha, LocalTime hora, String idioma) throws ApiException {
-        String languageToUse = getLanguageOrDefault(idioma);
-
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMyy");
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
-
-        String fechaStr = fecha.format(dateFormatter);
-        String horaStr = hora.format(timeFormatter);
-
-        Map<String, String> params = new HashMap<>();
-        params.put("idItinerario", String.valueOf(idItinerario));
-        params.put("idParada", String.valueOf(idParada));
-        params.put("fecha", fechaStr);
-        params.put("hora", horaStr);
-        params.put("idioma", languageToUse);
-        String url = buildUrl("expedicionesParadaItinerario", params);
-        return getJsonResponse(url, ExpedicionesParadaItinerarioResponse.class);
-    }
-
-    /**
-     * <p>
-     *  Synchronously retrieves trip information for a specific stop and direction (sense).
-     *  Endpoint: {@code expedicionesParadaSentido?idSentido=%s&idParada=%s&fecha=%s&hora=%s&idioma=%s}
-     * </p>
-     * @param idSentido The ID of the direction (sense).
-     * @param idParada The ID of the bus stop.
-     * @param fecha Date in ddMMyy format.
-     * @param hora Time in HHmm format.
-     * @param idioma The language for the response (es, eu, en, fr).
-     * @return A {@link ExpedicionesParadaSentidoResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     * @throws IllegalArgumentException if the language code is invalid.
-     */
-    public ExpedicionesParadaSentidoResponse expedicionesParadaSentido(int idSentido, int idParada, LocalDate fecha, LocalTime hora, String idioma) throws ApiException {
-        String languageToUse = getLanguageOrDefault(idioma);
-
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMyy");
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
-
-        String fechaStr = fecha.format(dateFormatter);
-        String horaStr = hora.format(timeFormatter);
-
-        Map<String, String> params = new HashMap<>();
-        params.put("idSentido", String.valueOf(idSentido));
-        params.put("idParada", String.valueOf(idParada));
-        params.put("fecha", fechaStr);
-        params.put("hora", horaStr);
-        params.put("idioma", languageToUse);
-        String url = buildUrl("expedicionesParadaSentido", params);
-        return getJsonResponse(url, ExpedicionesParadaSentidoResponse.class);
-    }
-
-    /**
-     * <p>
-     *  Synchronously retrieves itineraries for a specific line, optionally filtered by a stop.
-     *  Endpoints:
-     *  <ul>
-     *      <li>{@code itinerariosLinea?idLinea=%s&idioma=%s}</li>
-     *      <li>{@code itinerariosLinea?idLinea=%s&idParada=%s&idioma=%s}</li>
-     *  </ul>
-     * </p>
-     * @param idLinea The ID of the bus line.
-     * @param idioma The language for the response (es, eu, en, fr).
-     * @return A {@link ItinerariosLineaResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     * @throws IllegalArgumentException if the language code is invalid.
-     */
-    public ItinerariosLineaResponse itinerariosLinea(int idLinea, String idioma) throws ApiException {
-        String languageToUse = getLanguageOrDefault(idioma);
-        Map<String, String> params = new HashMap<>();
-        params.put("idLinea", String.valueOf(idLinea));
-        params.put("idioma", languageToUse);
-        String url = buildUrl("itinerariosLinea", params);
-        return getJsonResponse(url, ItinerariosLineaResponse.class);
-    }
-
-    /**
-     * <p>
-     *  Synchronously retrieves directions (senses) for a specific line, optionally filtered by a stop.
-     *  Endpoints:
-     *  <ul>
-     *      <li>{@code sentidosLinea?idLinea=%s&idioma=%s}</li>
-     *      <li>{@code sentidosLinea?idLinea=%s&idParada=%s&idioma=%s}</li>
-     *  </ul>
-     * </p>
-     * @param idLinea The ID of the bus line.
-     * @param idioma The language for the response (es, eu, en, fr).
-     * @return A {@link SentidosLineaResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     * @throws IllegalArgumentException if the language code is invalid.
-     */
-    public SentidosLineaResponse sentidosLinea(int idLinea, String idioma) throws ApiException {
-        String languageToUse = getLanguageOrDefault(idioma);
-        Map<String, String> params = new HashMap<>();
-        params.put("idLinea", String.valueOf(idLinea));
-        params.put("idioma", languageToUse);
-        String url = buildUrl("sentidosLinea", params);
-        return getJsonResponse(url, SentidosLineaResponse.class);
-    }
-
-    /**
-     * <p>
-     *  Synchronously retrieves trips for a specific itinerary, stop, day type, and time range.
-     *  Endpoint: {@code expedicionesItinerario?idParada=%s&tipoDia=%s&hInicio=%s&hFin=%s&idItinerario=%s}
-     * </p>
-     * @param idParada The ID of the bus stop.
-     * @param tipoDia Day type // NO HAY INFORMACION PERO SE USA "H" SI NO SE METE NINGUN VALOR.
-     * @param hInicio Start time in HHmm format.
-     * @param hFin End time in HHmm format.
-     * @param idItinerario The ID of the itinerary.
-     * @return A {@link ExpedicionesItinerarioResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     */
-    public ExpedicionesItinerarioResponse expedicionesItinerario(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin, int idItinerario) throws ApiException {
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
-
-        String hInicioStr = hInicio.format(timeFormatter);
-        String hFinStr = hFin.format(timeFormatter);
-
-        Map<String, String> params = new HashMap<>();
-        params.put("idParada", String.valueOf(idParada));
-        params.put("tipoDia", tipoDia);
-        params.put("hInicio", hInicioStr);
-        params.put("hFin", hFinStr);
-        params.put("idItinerario", String.valueOf(idItinerario));
-        String url = buildUrl("expedicionesItinerario", params);
-        return getJsonResponse(url, ExpedicionesItinerarioResponse.class);
-    }
-
-    /**
-     * <p>
-     *  Synchronously retrieves lines serving a specific stop for a given day type and time range.
-     *  Endpoint: {@code lineasParada?idParada=%s&tipoDia=%s&hInicio=%s&hFin=%s}
-     * </p>
-     * @param idParada The ID of the bus stop.
-     * @param tipoDia Day type (LAB, SAB, DOM).
-     * @param hInicio Start time in HHmm format.
-     * @param hFin End time in HHmm format.
-     * @return A {@link LineasParadaResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     */
-    public LineasParadaResponse lineasParada(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin) throws ApiException {
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
-
-        String hInicioStr = hInicio.format(timeFormatter);
-        String hFinStr = hFin.format(timeFormatter);
-
-        Map<String, String> params = new HashMap<>();
-        params.put("idParada", String.valueOf(idParada));
-        params.put("tipoDia", tipoDia);
-        params.put("hInicio", hInicioStr);
-        params.put("hFin", hFinStr);
-        String url = buildUrl("lineasParada", params);
-        return getJsonResponse(url, LineasParadaResponse.class);
-    }
-
-    /**
-     * <p>
-     *  Synchronously retrieves stops for a specific itinerary.
-     *  Endpoint: {@code paradasItinerario?idItinerario=%s}
-     * </p>
-     * @param idItinerario The ID of the itinerary.
-     * @return A {@link ParadasItinerarioResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     */
-    public ParadasItinerarioResponse paradasItinerario(int idItinerario) throws ApiException {
-        Map<String, String> params = new HashMap<>();
-        params.put("idItinerario", String.valueOf(idItinerario));
-        String url = buildUrl("paradasItinerario", params);
-        return getJsonResponse(url, ParadasItinerarioResponse.class);
-    }
-
-    /**
-     * <p>
-     *  Synchronously retrieves stops for a specific direction (sense).
-     *  Endpoint: {@code paradasSentido?idSentido=%s}
-     * </p>
-     * @param idSentido The ID of the direction (sense).
-     * @return A {@link ParadasSentidoResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     */
-    public ParadasSentidoResponse paradasSentido(int idSentido) throws ApiException {
-        Map<String, String> params = new HashMap<>();
-        params.put("idSentido", String.valueOf(idSentido));
-        String url = buildUrl("paradasSentido", params);
-        return getJsonResponse(url, ParadasSentidoResponse.class);
-    }
-
-    /**
-     * <p>
-     *  Synchronously retrieves the route path (geometry) for a specific line.
-     *  Endpoint: {@code recorridoLinea?idLinea=%s}
-     * </p>
-     * @param idLinea The ID of the bus line.
-     * @return A {@link RecorridoLineaResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     */
-    public RecorridoLineaResponse recorridoLinea(int idLinea) throws ApiException {
-        Map<String, String> params = new HashMap<>();
-        params.put("idLinea", String.valueOf(idLinea));
-        String url = buildUrl("recorridoLinea", params);
-        return getJsonResponse(url, RecorridoLineaResponse.class);
-    }
-
-    /**
-     * <p>
-     *  Synchronously retrieves a list of all bus lines.
-     *  Endpoint: {@code listadoLineas}
-     * </p>
-     * @return A {@link ListadoLineasResponse} representing the API response.
-     * @throws ApiException If the API request fails.
-     */
-    public ListadoLineasResponse listadoLineas() throws ApiException {
-        String url = buildUrl("listadoLineas", null); // No params for this endpoint
-        return getJsonResponse(url, ListadoLineasResponse.class);
-    }
-
-    public PuntosParadaResponse puntosParada() throws ApiException {
-        String url = buildUrl("puntosParada", null);
-        return getJsonResponse(url, PuntosParadaResponse.class);
-    }
-
-
     // --- API Endpoint Methods (Asynchronous) ---
 
     /**
@@ -539,8 +221,7 @@ public class DbusApiClient {
      * </p>
      * @param codParada The code of the bus stop.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A {@code CompletableFuture} that resolves to a {@link TiemposParadaResponse} representing the API response.
-     * @throws IllegalArgumentException if the language code is invalid.
+     * @return A {@link CompletableFuture} that resolves to a {@link TiemposParadaResponse} representing the API response.
      */
     public CompletableFuture<TiemposParadaResponse> tiemposParadaAsync(int codParada, String idioma) {
         String languageToUse = getLanguageOrDefault(idioma);
@@ -559,8 +240,7 @@ public class DbusApiClient {
      * @param codParada The code of the bus stop.
      * @param codVehiculo The code of the bus vehicle.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A {@code CompletableFuture} that resolves to a {@link TiemposParadaResponse} representing the API response.
-     * @throws IllegalArgumentException if the language code is invalid.
+     * @return A {@link CompletableFuture} that resolves to a {@link TiemposParadaResponse} representing the API response.
      */
     public CompletableFuture<TiemposParadaResponse> tiemposParadaBusAsync(int codParada, int codVehiculo, String idioma) {
         String languageToUse = getLanguageOrDefault(idioma);
@@ -579,7 +259,7 @@ public class DbusApiClient {
      * </p>
      * @param codVehiculo The code of the bus vehicle.
      * @param petItinerario Boolean value (true/false) as String to request itinerary information.
-     * @return A {@code CompletableFuture} that resolves to a {@link DatosVehiculoResponse} representing the API response.
+     * @return A {@link CompletableFuture} that resolves to a {@link DatosVehiculoResponse} representing the API response.
      */
     public CompletableFuture<DatosVehiculoResponse> datosVehiculoAsync(int codVehiculo, boolean petItinerario) {
         Map<String, String> params = new HashMap<>();
@@ -596,8 +276,7 @@ public class DbusApiClient {
      *  Endpoint: {@code avisos?idioma=%s}
      * </p>
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A {@code CompletableFuture} that resolves to a {@link AvisosResponse} representing the API response.
-     * @throws IllegalArgumentException if the language code is invalid.
+     * @return A {@link CompletableFuture} that resolves to a {@link AvisosResponse} representing the API response.
      */
     public CompletableFuture<AvisosResponse> avisosAsync(String idioma) {
         String languageToUse = getLanguageOrDefault(idioma);
@@ -617,8 +296,7 @@ public class DbusApiClient {
      * @param fecha Date in ddMMyy format.
      * @param hora Time in HHmm format.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A {@code CompletableFuture} that resolves to a {@link ExpedicionesParadaItinerarioResponse} representing the API response.
-     * @throws IllegalArgumentException if the language code is invalid.
+     * @return A {@link CompletableFuture} that resolves to a {@link ExpedicionesParadaItinerarioResponse} representing the API response.
      */
     public CompletableFuture<ExpedicionesParadaItinerarioResponse> expedicionesParadaItinerarioAsync(int idItinerario, int idParada, LocalDate fecha, LocalTime hora, String idioma) {
         String languageToUse = getLanguageOrDefault(idioma);
@@ -649,8 +327,7 @@ public class DbusApiClient {
      * @param fecha Date in ddMMyy format.
      * @param hora Time in HHmm format.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @return A {@code CompletableFuture} that resolves to a {@link ExpedicionesParadaSentidoResponse} representing the API response.
-     * @throws IllegalArgumentException if the language code is invalid.
+     * @return A {@link CompletableFuture} that resolves to a {@link ExpedicionesParadaSentidoResponse} representing the API response.
      */
     public CompletableFuture<ExpedicionesParadaSentidoResponse> expedicionesParadaSentidoAsync(int idSentido, int idParada, LocalDate fecha, LocalTime hora, String idioma) {
         String languageToUse = getLanguageOrDefault(idioma);
@@ -682,20 +359,14 @@ public class DbusApiClient {
      * </p>
      * @param idLinea The ID of the bus line.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @param idParada (Optional) The ID of the bus stop to filter itineraries.
-     * @return A {@code CompletableFuture} that resolves to a {@link ItinerariosLineaResponse} representing the API response.
-     * @throws IllegalArgumentException if the language code is invalid.
+     * @return A {@link CompletableFuture} that resolves to a {@link ItinerariosLineaResponse} representing the API response.
      */
-    public CompletableFuture<ItinerariosLineaResponse> itinerariosLineaAsync(int idLinea, String idioma, String... idParada) {
+    public CompletableFuture<ItinerariosLineaResponse> itinerariosLineaAsync(int idLinea, String idioma) {
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
         params.put("idLinea", String.valueOf(idLinea));
         params.put("idioma", languageToUse);
-        String path = "itinerariosLinea";
-        if (idParada.length > 0) {
-            params.put("idParada", idParada[0]);
-        }
-        String url = buildUrl(path, params);
+        String url = buildUrl("itinerariosLinea", params);
         return getJsonResponseAsync(url, ItinerariosLineaResponse.class);
     }
 
@@ -710,20 +381,14 @@ public class DbusApiClient {
      * </p>
      * @param idLinea The ID of the bus line.
      * @param idioma The language for the response (es, eu, en, fr).
-     * @param idParada (Optional) The ID of the bus stop to filter directions.
-     * @return A {@code CompletableFuture} that resolves to a {@link SentidosLineaResponse} representing the API response.
-     * @throws IllegalArgumentException if the language code is invalid.
+     * @return A {@link CompletableFuture} that resolves to a {@link SentidosLineaResponse} representing the API response.
      */
-    public CompletableFuture<SentidosLineaResponse> sentidosLineaAsync(int idLinea, String idioma, String... idParada) {
+    public CompletableFuture<SentidosLineaResponse> sentidosLineaAsync(int idLinea, String idioma) {
         String languageToUse = getLanguageOrDefault(idioma);
         Map<String, String> params = new HashMap<>();
         params.put("idLinea", String.valueOf(idLinea));
         params.put("idioma", languageToUse);
-        String path = "sentidosLinea";
-        if (idParada.length > 0) {
-            params.put("idParada", idParada[0]);
-        }
-        String url = buildUrl(path, params);
+        String url = buildUrl("sentidosLinea", params);
         return getJsonResponseAsync(url, SentidosLineaResponse.class);
     }
 
@@ -733,11 +398,11 @@ public class DbusApiClient {
      *  Endpoint: {@code expedicionesItinerario?idParada=%s&tipoDia=%s&hInicio=%s&hFin=%s&idItinerario=%s}
      * </p>
      * @param idParada The ID of the bus stop.
-     * @param tipoDia Day type (LAB, SAB, DOM).
-     * @param hInicio Start time in HHMM format.
+     * @param tipoDia Day type // NO HAY INFORMACION PERO SE USA "H" SI NO SE METE NINGUN VALOR.
+     * @param hInicio Start time in HHmm format.
      * @param hFin End time in HHmm format.
      * @param idItinerario The ID of the itinerary.
-     * @return A {@code CompletableFuture} that resolves to a {@link ExpedicionesItinerarioResponse} representing the API response.
+     * @return A {@link CompletableFuture} that resolves to a {@link ExpedicionesItinerarioResponse} representing the API response.
      */
     public CompletableFuture<ExpedicionesItinerarioResponse> expedicionesItinerarioAsync(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin, int idItinerario) {
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
@@ -764,7 +429,7 @@ public class DbusApiClient {
      * @param tipoDia Day type (LAB, SAB, DOM).
      * @param hInicio Start time in HHmm format.
      * @param hFin End time in HHmm format.
-     * @return A {@code CompletableFuture} that resolves to a {@link LineasParadaResponse} representing the API response.
+     * @return A {@link CompletableFuture} that resolves to a {@link LineasParadaResponse} representing the API response.
      */
     public CompletableFuture<LineasParadaResponse> lineasParadaAsync(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin) {
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
@@ -787,7 +452,7 @@ public class DbusApiClient {
      *  Endpoint: {@code paradasItinerario?idItinerario=%s}
      * </p>
      * @param idItinerario The ID of the itinerary.
-     * @return A {@code CompletableFuture} that resolves to a {@link ParadasItinerarioResponse} representing the API response.
+     * @return A {@link CompletableFuture} that resolves to a {@link ParadasItinerarioResponse} representing the API response.
      */
     public CompletableFuture<ParadasItinerarioResponse> paradasItinerarioAsync(int idItinerario) {
         Map<String, String> params = new HashMap<>();
@@ -802,7 +467,7 @@ public class DbusApiClient {
      *  Endpoint: {@code paradasSentido?idSentido=%s}
      * </p>
      * @param idSentido The ID of the direction (sense).
-     * @return A {@code CompletableFuture} that resolves to a {@link ParadasSentidoResponse} representing the API response.
+     * @return A {@link CompletableFuture} that resolves to a {@link ParadasSentidoResponse} representing the API response.
      */
     public CompletableFuture<ParadasSentidoResponse> paradasSentidoAsync(int idSentido) {
         Map<String, String> params = new HashMap<>();
@@ -817,7 +482,7 @@ public class DbusApiClient {
      *  Endpoint: {@code recorridoLinea?idLinea=%s}
      * </p>
      * @param idLinea The ID of the bus line.
-     * @return A {@code CompletableFuture} that resolves to a {@link RecorridoLineaResponse} representing the API response.
+     * @return A {@link CompletableFuture} that resolves to a {@link RecorridoLineaResponse} representing the API response.
      */
     public CompletableFuture<RecorridoLineaResponse> recorridoLineaAsync(int idLinea) {
         Map<String, String> params = new HashMap<>();
@@ -828,13 +493,257 @@ public class DbusApiClient {
 
     /**
      * <p>
-     *   Asynchronously retrieves a list of all bus lines.
-     *   Endpoint: {@code listadoLineas}
+     *  Asynchronously retrieves a list of all bus lines.
+     *  Endpoint: {@code listadoLineas}
      * </p>
-     * @return A {@code CompletableFuture} that resolves to a {@link ListadoLineasResponse} representing the API response.
+     * @return A {@link CompletableFuture} that resolves to a {@link ListadoLineasResponse} representing the API response.
      */
     public CompletableFuture<ListadoLineasResponse> listadoLineasAsync() {
         String url = buildUrl("listadoLineas", null); // No params for this endpoint
         return getJsonResponseAsync(url, ListadoLineasResponse.class);
+    }
+
+    /**
+     * <p>
+     *  Asynchronously retrieves a list of all stop points.
+     *  Endpoint: {@code puntosParada}
+     * </p>
+     * @return A {@link CompletableFuture} that resolves to a {@link PuntosParadaResponse} representing the API response.
+     */
+    public CompletableFuture<PuntosParadaResponse> puntosParadaAsync() {
+        String url = buildUrl("puntosParada", null);
+        return getJsonResponseAsync(url, PuntosParadaResponse.class);
+    }
+
+
+    // --- API Endpoint Methods (Synchronous) ---
+
+    /**
+     * <p>
+     *  Synchronously retrieves estimated arrival times for buses at a specific stop.
+     *  Endpoint: {@code tiemposParada?codParada=%s&idioma=%s}
+     * </p>
+     * @param codParada The code of the bus stop.
+     * @param idioma The language for the response (es, eu, en, fr).
+     * @return A {@link TiemposParadaResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     * @throws IllegalArgumentException if the language code is invalid.
+     */
+    public TiemposParadaResponse tiemposParada(int codParada, String idioma) throws ApiException {
+        return tiemposParadaAsync(codParada, idioma).join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves estimated arrival times for a specific bus at a specific stop.
+     *  Endpoint: {@code tiemposParadaBus?codParada=%s&codVehiculo=%s&idioma=%s}
+     * </p>
+     * @param codParada The code of the bus stop.
+     * @param codVehiculo The code of the bus vehicle.
+     * @param idioma The language for the response (es, eu, en, fr).
+     * @return A {@link TiemposParadaResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     * @throws IllegalArgumentException if the language code is invalid.
+     */
+    public TiemposParadaResponse tiemposParadaBus(int codParada, int codVehiculo, String idioma) throws ApiException {
+        return tiemposParadaBusAsync(codParada, codVehiculo, idioma).join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves data for a specific bus vehicle.
+     *  Endpoint: {@code datosVehiculo?codVehiculo=%s&codEmpresa=1&petItinerario=%s}
+     * </p>
+     * @param codVehiculo The code of the bus vehicle.
+     * @param petItinerario Boolean value (true/false) as String to request itinerary information.
+     * @return A {@link DatosVehiculoResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     */
+    public DatosVehiculoResponse datosVehiculo(int codVehiculo, boolean petItinerario) throws ApiException {
+        return datosVehiculoAsync(codVehiculo, petItinerario).join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves general alerts or notices from the dBUS service.
+     *  Endpoint: {@code avisos?idioma=%s}
+     * </p>
+     * @param idioma The language for the response (es, eu, en, fr).
+     * @return A {@link AvisosResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     * @throws IllegalArgumentException if the language code is invalid.
+     */
+    public AvisosResponse avisos(String idioma) throws ApiException {
+        return avisosAsync(idioma).join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves trip information for a specific stop and itinerary.
+     *  Endpoint: {@code expedicionesParadaItinerario?idItinerario=%s&idParada=%s&fecha=%s&hora=%s&idioma=%s}
+     * </p>
+     * @param idItinerario The ID of the itinerary.
+     * @param idParada The ID of the bus stop.
+     * @param fecha Date in ddMMyy format.
+     * @param hora Time in HHmm format.
+     * @param idioma The language for the response (es, eu, en, fr).
+     * @return A {@link ExpedicionesParadaItinerarioResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     * @throws IllegalArgumentException if the language code is invalid.
+     */
+    public ExpedicionesParadaItinerarioResponse expedicionesParadaItinerario(int idItinerario, int idParada, LocalDate fecha, LocalTime hora, String idioma) throws ApiException {
+        return expedicionesParadaItinerarioAsync(idItinerario, idParada, fecha, hora, idioma).join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves trip information for a specific stop and direction (sense).
+     *  Endpoint: {@code expedicionesParadaSentido?idSentido=%s&idParada=%s&fecha=%s&hora=%s&idioma=%s}
+     * </p>
+     * @param idSentido The ID of the direction (sense).
+     * @param idParada The ID of the bus stop.
+     * @param fecha Date in ddMMyy format.
+     * @param hora Time in HHmm format.
+     * @param idioma The language for the response (es, eu, en, fr).
+     * @return A {@link ExpedicionesParadaSentidoResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     * @throws IllegalArgumentException if the language code is invalid.
+     */
+    public ExpedicionesParadaSentidoResponse expedicionesParadaSentido(int idSentido, int idParada, LocalDate fecha, LocalTime hora, String idioma) throws ApiException {
+        return expedicionesParadaSentidoAsync(idSentido, idParada, fecha, hora, idioma).join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves itineraries for a specific line, optionally filtered by a stop.
+     *  Endpoints:
+     *  <ul>
+     *      <li>{@code itinerariosLinea?idLinea=%s&idioma=%s}</li>
+     *      <li>{@code itinerariosLinea?idLinea=%s&idParada=%s&idioma=%s}</li>
+     *  </ul>
+     * </p>
+     * @param idLinea The ID of the bus line.
+     * @param idioma The language for the response (es, eu, en, fr).
+     * @return A {@link ItinerariosLineaResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     * @throws IllegalArgumentException if the language code is invalid.
+     */
+    public ItinerariosLineaResponse itinerariosLinea(int idLinea, String idioma) throws ApiException {
+        return itinerariosLineaAsync(idLinea, idioma).join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves directions (senses) for a specific line, optionally filtered by a stop.
+     *  Endpoints:
+     *  <ul>
+     *      <li>{@code sentidosLinea?idLinea=%s&idioma=%s}</li>
+     *      <li>{@code sentidosLinea?idLinea=%s&idParada=%s&idioma=%s}</li>
+     *  </ul>
+     * </p>
+     * @param idLinea The ID of the bus line.
+     * @param idioma The language for the response (es, eu, en, fr).
+     * @return A {@link SentidosLineaResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     * @throws IllegalArgumentException if the language code is invalid.
+     */
+    public SentidosLineaResponse sentidosLinea(int idLinea, String idioma) throws ApiException {
+        return sentidosLineaAsync(idLinea, idioma).join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves trips for a specific itinerary, stop, day type, and time range.
+     *  Endpoint: {@code expedicionesItinerario?idParada=%s&tipoDia=%s&hInicio=%s&hFin=%s&idItinerario=%s}
+     * </p>
+     * @param idParada The ID of the bus stop.
+     * @param tipoDia Day type // NO HAY INFORMACION PERO SE USA "H" SI NO SE METE NINGUN VALOR.
+     * @param hInicio Start time in HHmm format.
+     * @param hFin End time in HHmm format.
+     * @param idItinerario The ID of the itinerary.
+     * @return A {@link ExpedicionesItinerarioResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     */
+    public ExpedicionesItinerarioResponse expedicionesItinerario(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin, int idItinerario) throws ApiException {
+        return expedicionesItinerarioAsync(idParada, tipoDia, hInicio, hFin, idItinerario).join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves lines serving a specific stop for a given day type and time range.
+     *  Endpoint: {@code lineasParada?idParada=%s&tipoDia=%s&hInicio=%s&hFin=%s}
+     * </p>
+     * @param idParada The ID of the bus stop.
+     * @param tipoDia Day type (LAB, SAB, DOM).
+     * @param hInicio Start time in HHmm format.
+     * @param hFin End time in HHmm format.
+     * @return A {@link LineasParadaResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     */
+    public LineasParadaResponse lineasParada(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin) throws ApiException {
+        return lineasParadaAsync(idParada, tipoDia, hInicio, hFin).join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves stops for a specific itinerary.
+     *  Endpoint: {@code paradasItinerario?idItinerario=%s}
+     * </p>
+     * @param idItinerario The ID of the itinerary.
+     * @return A {@link ParadasItinerarioResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     */
+    public ParadasItinerarioResponse paradasItinerario(int idItinerario) throws ApiException {
+        return paradasItinerarioAsync(idItinerario).join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves stops for a specific direction (sense).
+     *  Endpoint: {@code paradasSentido?idSentido=%s}
+     * </p>
+     * @param idSentido The ID of the direction (sense).
+     * @return A {@link ParadasSentidoResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     */
+    public ParadasSentidoResponse paradasSentido(int idSentido) throws ApiException {
+        return paradasSentidoAsync(idSentido).join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves the route path (geometry) for a specific line.
+     *  Endpoint: {@code recorridoLinea?idLinea=%s}
+     * </p>
+     * @param idLinea The ID of the bus line.
+     * @return A {@link RecorridoLineaResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     */
+    public RecorridoLineaResponse recorridoLinea(int idLinea) throws ApiException {
+        return recorridoLineaAsync(idLinea).join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves a list of all bus lines.
+     *  Endpoint: {@code listadoLineas}
+     * </p>
+     * @return A {@link ListadoLineasResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     */
+    public ListadoLineasResponse listadoLineas() throws ApiException {
+        return listadoLineasAsync().join();
+    }
+
+    /**
+     * <p>
+     *  Synchronously retrieves a list of all stop points.
+     *  Endpoint: {@code puntosParada}
+     * </p>
+     * @return A {@link PuntosParadaResponse} representing the API response.
+     * @throws ApiException If the API request fails.
+     */
+    public PuntosParadaResponse puntosParada() throws ApiException {
+        return puntosParadaAsync().join();
     }
 }
