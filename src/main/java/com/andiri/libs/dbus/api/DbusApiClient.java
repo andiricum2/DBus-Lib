@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
  * <p>
  *  The {@code DbusApiClient} class provides a Java client to interact with the dBUS API using OkHttp.
  *  It handles communication, request building, response parsing, and error handling for all available API endpoints.
- *  The client is configured using a {@link DbusApiClientBuilder} for setting default language, connection and read timeouts.
+ *  The client is configured using a {@link DbusApiClientBuilder} for setting default language, connection and read timeouts, and optionally providing a custom OkHttpClient.
  * </p>
  * <p>
  *  It supports both synchronous and asynchronous API calls, now returning Java models instead of JSON strings.
@@ -62,7 +62,7 @@ public class DbusApiClient {
         }
 
         this.objectMapper = new ObjectMapper();
-        this.httpClient = new OkHttpClient.Builder()
+        this.httpClient = builder.httpClient() != null ? builder.httpClient() : new OkHttpClient.Builder()
                 .connectTimeout(java.time.Duration.ofMillis(this.connectTimeoutMillis))
                 .readTimeout(java.time.Duration.ofMillis(this.readTimeoutMillis))
                 .build();
