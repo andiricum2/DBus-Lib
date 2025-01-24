@@ -116,10 +116,12 @@ public class DbusApiClient {
             if (response.isSuccessful()) {
                 ResponseBody responseBody = response.body();
                 if (responseBody != null) {
+                    String responseBodyString = responseBody.string(); // Read it ONCE and store
+
                     try {
-                        return objectMapper.readValue(responseBody.string(), responseClass);
+                        return objectMapper.readValue(responseBodyString, responseClass); // Parse from the stored string
                     } catch (Exception e) {
-                        throw new ApiResponseParseException("Error parsing API response", responseBody.string(), e);
+                        throw new ApiResponseParseException("Error parsing API response", responseBodyString, e); // Pass the string for error context
                     }
                 } else {
                     throw new ApiResponseParseException("Empty API response body", "", null);
@@ -141,7 +143,6 @@ public class DbusApiClient {
             throw new ApiConnectionException("Error connecting to API", e);
         }
     }
-
     /**
      * Private helper method to execute an asynchronous HTTP GET request and parse the JSON response to a specific model class using OkHttp.
      * @param url The full API URL to call.
