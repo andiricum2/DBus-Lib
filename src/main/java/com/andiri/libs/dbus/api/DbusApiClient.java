@@ -4,18 +4,17 @@ package com.andiri.libs.dbus.api;
 import com.andiri.libs.dbus.exceptions.*;
 import com.andiri.libs.dbus.model.response.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.*;
+import okhttp3.MediaType;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -25,7 +24,7 @@ import java.util.concurrent.Executors;
 
 /**
  * <p>
- *  The {@code DbusApiClient} class provides a Java client to interact with the dBUS API.
+ *  The {@code DbusApiClient} class provides a Java client to interact with the dBUS API using OkHttp.
  *  It handles communication, request building, response parsing, and error handling for all available API endpoints.
  *  The client is configured using a {@link DbusApiClientBuilder} for setting default language, connection and read timeouts.
  * </p>
@@ -42,8 +41,10 @@ public class DbusApiClient {
     private final int connectTimeoutMillis;
     private final int readTimeoutMillis;
     private final ExecutorService executorService = Executors.newFixedThreadPool(10); // Executor for async requests
+    private final OkHttpClient httpClient;
+    private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
 
-    private static final Set<String> VALID_LANGUAGES = new java.util.HashSet<>(java.util.Arrays.asList("es", "eu", "en", "fr"));
+    private static final Set<String> VALID_LANGUAGES = new HashSet<>(java.util.Arrays.asList("es", "eu", "en", "fr"));
 
     /**
      * Private constructor to create a {@code DbusApiClient} using a {@code Builder}.
@@ -61,6 +62,10 @@ public class DbusApiClient {
         }
 
         this.objectMapper = new ObjectMapper();
+        this.httpClient = new OkHttpClient.Builder()
+                .connectTimeout(java.time.Duration.ofMillis(this.connectTimeoutMillis))
+                .readTimeout(java.time.Duration.ofMillis(this.readTimeoutMillis))
+                .build();
     }
 
     /**
@@ -91,7 +96,7 @@ public class DbusApiClient {
     }
 
     /**
-     * Private helper method to execute a synchronous HTTP GET request and parse the JSON response to a specific model class.
+     * Private helper method to execute a synchronous HTTP GET request and parse the JSON response to a specific model class using OkHttp.
      * @param url The full API URL to call.
      * @param responseClass The class of the model to which the JSON response should be deserialized.
      * @param <T> The type of the response model.
@@ -99,45 +104,37 @@ public class DbusApiClient {
      * @throws ApiException If the API request fails or the response cannot be parsed.
      */
     private <T> T getJsonResponse(String url, Class<T> responseClass) throws ApiException {
-        try {
-            URL apiUrl = new URL(url);
-            HttpURLConnection connection = (HttpURLConnection) apiUrl.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setRequestProperty("Accept", "application/json");
-            connection.setConnectTimeout(this.connectTimeoutMillis);
-            connection.setReadTimeout(this.readTimeoutMillis);
+        Request request = new Request.Builder()
+                .url(url)
+                .header("Accept", "application/json")
+                .get()
+                .build();
 
-            int statusCode = connection.getResponseCode();
+        try (Response response = httpClient.newCall(request).execute()) {
+            int statusCode = response.code();
 
-            if (statusCode >= 200 && statusCode < 300) {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-                    StringBuilder responseBody = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        responseBody.append(line);
-                    }
+            if (response.isSuccessful()) {
+                ResponseBody responseBody = response.body();
+                if (responseBody != null) {
                     try {
-                        return objectMapper.readValue(responseBody.toString(), responseClass);
+                        return objectMapper.readValue(responseBody.string(), responseClass);
                     } catch (Exception e) {
-                        throw new ApiResponseParseException("Error parsing API response", responseBody.toString(), e);
+                        throw new ApiResponseParseException("Error parsing API response", responseBody.string(), e);
                     }
+                } else {
+                    throw new ApiResponseParseException("Empty API response body", "", null);
                 }
             } else {
-                String responseBody = "";
-                if (connection.getErrorStream() != null) {
-                    try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(connection.getErrorStream(), StandardCharsets.UTF_8))) {
-                        StringBuilder errorResponseBody = new StringBuilder();
-                        String line;
-                        while ((line = errorReader.readLine()) != null) {
-                            errorResponseBody.append(line);
-                        }
-                        responseBody = errorResponseBody.toString();
+                String responseBodyString = "";
+                ResponseBody errorBody = response.body();
+                if (errorBody != null) {
+                    try {
+                        responseBodyString = errorBody.string();
                     } catch (IOException ioException) {
-                        // Log or handle error reading error stream if needed, but proceed with what we have.
-                        responseBody = "Could not read error stream";
+                        responseBodyString = "Could not read error stream";
                     }
                 }
-                throw createApiExceptionForStatusCode(statusCode, responseBody);
+                throw createApiExceptionForStatusCode(statusCode, responseBodyString);
             }
 
         } catch (IOException e) {
@@ -146,7 +143,7 @@ public class DbusApiClient {
     }
 
     /**
-     * Private helper method to execute an asynchronous HTTP GET request and parse the JSON response to a specific model class.
+     * Private helper method to execute an asynchronous HTTP GET request and parse the JSON response to a specific model class using OkHttp.
      * @param url The full API URL to call.
      * @param responseClass The class of the model to which the JSON response should be deserialized.
      * @param <T> The type of the response model.
