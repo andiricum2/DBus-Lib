@@ -524,6 +524,11 @@ public class DbusApiClient {
         return getJsonResponse(url, ListadoLineasResponse.class);
     }
 
+    public PuntosParadaResponse puntosParada() throws ApiException {
+        String url = buildUrl("puntosParada", null);
+        return getJsonResponse(url, PuntosParadaResponse.class);
+    }
+
 
     // --- API Endpoint Methods (Asynchronous) ---
 
