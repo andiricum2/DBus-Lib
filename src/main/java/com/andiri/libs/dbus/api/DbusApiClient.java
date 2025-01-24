@@ -5,10 +5,13 @@ import com.andiri.libs.dbus.exceptions.*;
 import com.andiri.libs.dbus.model.response.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -16,6 +19,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * <p>
@@ -31,14 +37,13 @@ import java.util.concurrent.CompletableFuture;
 public class DbusApiClient {
 
     private static final String BASE_URL = "http://62.99.53.182/SSIIMovilWSv2/ws/cons/"; // Hardcoded base URL
-    private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String defaultLanguage;
     private final int connectTimeoutMillis;
     private final int readTimeoutMillis;
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10); // Executor for async requests
 
-    private static final Set<String> VALID_LANGUAGES = Set.of("es", "eu", "en", "fr");
-
+    private static final Set<String> VALID_LANGUAGES = new java.util.HashSet<>(java.util.Arrays.asList("es", "eu", "en", "fr"));
 
     /**
      * Private constructor to create a {@code DbusApiClient} using a {@code Builder}.
@@ -55,9 +60,6 @@ public class DbusApiClient {
             throw new IllegalArgumentException("Invalid default language: " + this.defaultLanguage + ". Must be one of: " + VALID_LANGUAGES);
         }
 
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(java.time.Duration.ofMillis(this.connectTimeoutMillis))
-                .build();
         this.objectMapper = new ObjectMapper();
     }
 
@@ -69,14 +71,23 @@ public class DbusApiClient {
      */
     private String buildUrl(String path, Map<String, String> params) {
         StringBuilder urlBuilder = new StringBuilder(BASE_URL); // Use BASE_URL here
-        urlBuilder.append(path).append("?");
-        if (params != null && !params.isEmpty()) {
-            params.forEach((key, value) -> urlBuilder.append(key).append("=").append(value).append("&"));
+        try {
+            urlBuilder.append(path).append("?");
+            if (params != null && !params.isEmpty()) {
+                for (Map.Entry<String, String> entry : params.entrySet()) {
+                    urlBuilder.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString()))
+                            .append("=")
+                            .append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString()))
+                            .append("&");
+                }
+            }
+            if (urlBuilder.charAt(urlBuilder.length() - 1) == '&') {
+                urlBuilder.deleteCharAt(urlBuilder.length() - 1);
+            }
+            return urlBuilder.toString();
+        } catch (IOException e) {
+            throw new ApiConnectionException("Error encoding URL parameters", e); // Or handle more gracefully
         }
-        if (urlBuilder.charAt(urlBuilder.length() - 1) == '&') {
-            urlBuilder.deleteCharAt(urlBuilder.length() - 1);
-        }
-        return urlBuilder.toString();
     }
 
     /**
@@ -88,29 +99,49 @@ public class DbusApiClient {
      * @throws ApiException If the API request fails or the response cannot be parsed.
      */
     private <T> T getJsonResponse(String url, Class<T> responseClass) throws ApiException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Accept", "application/json")
-                .GET()
-                .timeout(java.time.Duration.ofMillis(this.readTimeoutMillis))
-                .build();
-
-        HttpResponse<String> response;
         try {
-            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (Exception e) {
-            throw new ApiConnectionException("Error connecting to API", e);
-        }
+            URL apiUrl = new URL(url);
+            HttpURLConnection connection = (HttpURLConnection) apiUrl.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("Accept", "application/json");
+            connection.setConnectTimeout(this.connectTimeoutMillis);
+            connection.setReadTimeout(this.readTimeoutMillis);
 
-        if (response.statusCode() >= 200 && response.statusCode() < 300) {
-            try {
-                // Deserialize JSON response to the specified model class
-                return objectMapper.readValue(response.body(), responseClass);
-            } catch (Exception e) {
-                throw new ApiResponseParseException("Error parsing API response", response.body(), e);
+            int statusCode = connection.getResponseCode();
+
+            if (statusCode >= 200 && statusCode < 300) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+                    StringBuilder responseBody = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        responseBody.append(line);
+                    }
+                    try {
+                        return objectMapper.readValue(responseBody.toString(), responseClass);
+                    } catch (Exception e) {
+                        throw new ApiResponseParseException("Error parsing API response", responseBody.toString(), e);
+                    }
+                }
+            } else {
+                String responseBody = "";
+                if (connection.getErrorStream() != null) {
+                    try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(connection.getErrorStream(), StandardCharsets.UTF_8))) {
+                        StringBuilder errorResponseBody = new StringBuilder();
+                        String line;
+                        while ((line = errorReader.readLine()) != null) {
+                            errorResponseBody.append(line);
+                        }
+                        responseBody = errorResponseBody.toString();
+                    } catch (IOException ioException) {
+                        // Log or handle error reading error stream if needed, but proceed with what we have.
+                        responseBody = "Could not read error stream";
+                    }
+                }
+                throw createApiExceptionForStatusCode(statusCode, responseBody);
             }
-        } else {
-            throw createApiExceptionForStatusCode(response.statusCode(), response.body());
+
+        } catch (IOException e) {
+            throw new ApiConnectionException("Error connecting to API", e);
         }
     }
 
@@ -122,27 +153,26 @@ public class DbusApiClient {
      * @return A CompletableFuture that resolves to the deserialized response model.
      */
     private <T> CompletableFuture<T> getJsonResponseAsync(String url, Class<T> responseClass) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Accept", "application/json")
-                .GET()
-                .timeout(java.time.Duration.ofMillis(this.readTimeoutMillis))
-                .build();
-
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(response -> {
-                    if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                        try {
-                            // Deserialize JSON response to the specified model class
-                            return objectMapper.readValue(response.body(), responseClass);
-                        } catch (Exception e) {
-                            throw new ApiResponseParseException("Error parsing API response", response.body(), e);
-                        }
-                    } else {
-                        throw createApiExceptionForStatusCode(response.statusCode(), response.body());
-                    }
-                });
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return getJsonResponse(url, responseClass);
+            } catch (ApiException e) {
+                throw new CompletionException(e); // Wrap ApiException for CompletableFuture
+            }
+        }, executorService).exceptionally(throwable -> {
+            if (throwable instanceof CompletionException) {
+                Throwable cause = throwable.getCause();
+                if (cause instanceof ApiException) {
+                    throw (ApiException) cause; // Re-throw the original ApiException
+                }
+            }
+            if (throwable instanceof ApiException) {
+                throw (ApiException) throwable;
+            }
+            throw new ApiConnectionException("Error executing asynchronous API call", throwable); // Generic async exception
+        });
     }
+
 
     /**
      * Private helper method to create a specific {@link ApiException} based on the HTTP status code.
@@ -387,8 +417,8 @@ public class DbusApiClient {
      * </p>
      * @param idParada The ID of the bus stop.
      * @param tipoDia Day type // NO HAY INFORMACION PERO SE USA "H" SI NO SE METE NINGUN VALOR.
-     * @param hInicio Start time in HHMM format.
-     * @param hFin End time in HHMM format.
+     * @param hInicio Start time in HHmm format.
+     * @param hFin End time in HHmm format.
      * @param idItinerario The ID of the itinerary.
      * @return A {@link ExpedicionesItinerarioResponse} representing the API response.
      * @throws ApiException If the API request fails.
@@ -416,8 +446,8 @@ public class DbusApiClient {
      * </p>
      * @param idParada The ID of the bus stop.
      * @param tipoDia Day type (LAB, SAB, DOM).
-     * @param hInicio Start time in HHMM format.
-     * @param hFin End time in HHMM format.
+     * @param hInicio Start time in HHmm format.
+     * @param hFin End time in HHmm format.
      * @return A {@link LineasParadaResponse} representing the API response.
      * @throws ApiException If the API request fails.
      */
@@ -703,7 +733,7 @@ public class DbusApiClient {
      * @param idParada The ID of the bus stop.
      * @param tipoDia Day type (LAB, SAB, DOM).
      * @param hInicio Start time in HHMM format.
-     * @param hFin End time in HHMM format.
+     * @param hFin End time in HHmm format.
      * @param idItinerario The ID of the itinerary.
      * @return A {@code CompletableFuture} that resolves to a {@link ExpedicionesItinerarioResponse} representing the API response.
      */
@@ -730,8 +760,8 @@ public class DbusApiClient {
      * </p>
      * @param idParada The ID of the bus stop.
      * @param tipoDia Day type (LAB, SAB, DOM).
-     * @param hInicio Start time in HHMM format.
-     * @param hFin End time in HHMM format.
+     * @param hInicio Start time in HHmm format.
+     * @param hFin End time in HHmm format.
      * @return A {@code CompletableFuture} that resolves to a {@link LineasParadaResponse} representing the API response.
      */
     public CompletableFuture<LineasParadaResponse> lineasParadaAsync(int idParada, String tipoDia, LocalTime hInicio, LocalTime hFin) {
