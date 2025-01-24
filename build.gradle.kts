@@ -11,9 +11,14 @@ repositories {
 }
 
 java {
+    withSourcesJar()
+
+    // Configuramos la compatibilidad de bytecode para versiones superiores a 11
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
-    withSourcesJar()
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(11))
+    }
 }
 
 publishing {
@@ -57,4 +62,3 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
-
