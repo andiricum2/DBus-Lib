@@ -15,7 +15,6 @@ java {
         languageVersion.set(JavaLanguageVersion.of(11))
     }
     withSourcesJar()
-    withJavadocJar()
 }
 
 publishing {
