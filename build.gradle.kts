@@ -1,5 +1,5 @@
 plugins {
-    id("java-library")
+    id("java")
     id("maven-publish")
 }
 
@@ -16,9 +16,6 @@ java {
     // Configuramos la compatibilidad de bytecode para versiones superiores a 11
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
-    }
 }
 
 publishing {
